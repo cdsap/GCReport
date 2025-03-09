@@ -41,7 +41,6 @@ class GCReportPluginWithoutDevelocityTest {
                 .withArguments("tasks")
                 .withPluginClasspath()
                 .build()
-println(result.output)
         assertTrue(result.output.contains("GC Log: gc.log"))
         assertTrue(result.output.contains("Collection type"))
         assertTrue(!result.output.contains("GC Histogram: gc.log"))

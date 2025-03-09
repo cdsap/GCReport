@@ -1,0 +1,38 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build:
+    name: "Build and test"
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+      pull-requests: write
+      security-events: write
+
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout
+
+        uses: actions/checkout@v4
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 17
+
+      - name: Ktlinkt
+        run: ./gradlew ktlintCheck
+
+      - name: test
+        run: ./gradlew test
+        env:
+          GE_API_KEY: ${{ secrets.GE_API }}
+          GE_URL: ${{ secrets.GE_URL }}

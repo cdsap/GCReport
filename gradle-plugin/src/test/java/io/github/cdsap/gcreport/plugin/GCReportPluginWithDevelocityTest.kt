@@ -52,6 +52,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -84,9 +85,9 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
-                    client.get("$develocityUrl/api/builds") {
+                    client.get("${develocityUrl}api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
                         parameter("maxBuilds", 1)
                         parameter("models", "gradle-attributes")
@@ -95,6 +96,7 @@ class GCReportPluginWithDevelocityTest {
                     }
                 val responseBody: String = response.body()
                 val gson = Gson()
+                println(responseBody)
                 val responseArray = gson.fromJson(responseBody, Array<Response>::class.java)
                 gcLogs.addAll(responseArray[0].models.gradleAttributes.model.values)
             } catch (e: Exception) {
@@ -136,6 +138,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -168,9 +171,9 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
-                    client.get("$develocityUrl/api/builds") {
+                    client.get("${develocityUrl}api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
                         parameter("maxBuilds", 1)
                         parameter("models", "gradle-attributes")
@@ -213,6 +216,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -254,9 +258,9 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
-                    client.get("$develocityUrl/api/builds") {
+                    client.get("${develocityUrl}api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
                         parameter("maxBuilds", 1)
                         parameter("models", "gradle-attributes")
@@ -264,7 +268,6 @@ class GCReportPluginWithDevelocityTest {
                         parameter("query", "tag:$randomValue")
                     }
                 val responseBody: String = response.body()
-                println(responseBody)
                 val gson = Gson()
                 val responseArray = gson.fromJson(responseBody, Array<Response>::class.java)
                 gcLogs.addAll(responseArray[0].models.gradleAttributes.model.values)
