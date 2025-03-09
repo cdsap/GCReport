@@ -96,6 +96,7 @@ class GCReportPluginWithDevelocityTest {
                     }
                 val responseBody: String = response.body()
                 val gson = Gson()
+                println(responseBody)
                 val responseArray = gson.fromJson(responseBody, Array<Response>::class.java)
                 gcLogs.addAll(responseArray[0].models.gradleAttributes.model.values)
             } catch (e: Exception) {
