@@ -32,7 +32,7 @@ jobs:
         run: ./gradlew ktlintCheck
 
       - name: test
-        run: ./gradlew test
+        run: ./gradlew test --info
         env:
           GE_API_KEY: ${{ secrets.GE_API }}
           GE_URL: ${{ secrets.GE_URL }}
