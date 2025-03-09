@@ -52,6 +52,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -84,7 +85,7 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
                     client.get("$develocityUrl/api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
@@ -136,6 +137,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -168,7 +170,7 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
                     client.get("$develocityUrl/api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
@@ -213,6 +215,7 @@ class GCReportPluginWithDevelocityTest {
                 server = "$develocityUrl"
                 accessKey="$develocityAccessKey"
                 buildScan {
+                      isUploadInBackground = false
                       tag("$randomValue")
 
                 }
@@ -254,7 +257,7 @@ class GCReportPluginWithDevelocityTest {
         runBlocking {
             val client = HttpClient(CIO) {}
             try {
-                delay(5000)
+                delay(10000)
                 val response =
                     client.get("$develocityUrl/api/builds") {
                         header("Authorization", "Bearer $develocityAccessKey")
