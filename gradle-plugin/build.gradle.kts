@@ -31,7 +31,7 @@ gradlePlugin {
             implementationClass = "io.github.cdsap.gcreport.plugin.GCReportPlugin"
             displayName = "GC Report"
             description = "Gradle plugin that collects GC metrics based on the GC logs generated during the build"
-            tags = listOf("kotlin", "gradle", "gc", "performance")
+            tags = listOf("kotlin", "gc", "performance")
         }
     }
 }
