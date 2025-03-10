@@ -9,7 +9,7 @@ Analyzing the types of garbage collections that occurred during the build can pr
 #### Apply the plugin
 ```kotlin
 plugins {
-  id("io.github.cdsap.gc-report") version "0.1.0"
+  id("io.github.cdsap.gcreport") version "0.1.0"
 }
 ```
 #### Configure JVM properties with the daemon log
