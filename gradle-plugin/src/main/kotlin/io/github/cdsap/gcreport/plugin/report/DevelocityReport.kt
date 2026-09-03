@@ -11,9 +11,6 @@ class DevelocityReport(
     private val extension: GCReportExtension,
 ) {
     fun report() {
-        if (extension.enableConsoleLog.get()) {
-            //   serviceHandler.createService()
-        }
         develocityConfiguration.buildScan.buildFinished {
             extension.logs.get().filter { File(it).exists() }.forEach {
                 val gcEntries = GCLogReader(File(it)).parse()
