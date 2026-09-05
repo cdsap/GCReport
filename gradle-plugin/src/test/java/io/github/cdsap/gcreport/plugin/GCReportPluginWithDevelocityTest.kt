@@ -11,9 +11,9 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.gradle.internal.impldep.org.junit.Assume
 import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
@@ -25,9 +25,9 @@ class GCReportPluginWithDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report for G1`() {
-        Assume.assumeTrue(
-            "Develocity URL and Access Key are set",
+        assumeTrue(
             System.getenv("GE_URL") != null && System.getenv("GE_API_KEY") != null,
+            "Develocity URL and Access Key are set",
         )
         val develocityUrl = System.getenv("GE_URL")
         val develocityAccessKey = System.getenv("GE_API_KEY")
@@ -110,9 +110,9 @@ class GCReportPluginWithDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report for Parallel`() {
-        Assume.assumeTrue(
-            "Develocity URL and Access Key are set",
+        assumeTrue(
             System.getenv("GE_URL") != null && System.getenv("GE_API_KEY") != null,
+            "Develocity URL and Access Key are set",
         )
 
         val develocityUrl = System.getenv("GE_URL")
@@ -196,9 +196,9 @@ class GCReportPluginWithDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report and Histogram`() {
-        Assume.assumeTrue(
-            "Develocity URL and Access Key are set",
+        assumeTrue(
             System.getenv("GE_URL") != null && System.getenv("GE_API_KEY") != null,
+            "Develocity URL and Access Key are set",
         )
 
         val develocityUrl = System.getenv("GE_URL")
