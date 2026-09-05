@@ -6,6 +6,7 @@ import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.model.GCCollectionMetrics
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
@@ -39,6 +40,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
                 val headers = "Collection type,Occurrences\n"
                 var content = ""
+                val collectionMetrics = GCCollectionMetrics(gcEntries)
 
                 println(
                     table {
@@ -54,11 +56,11 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                             }
                         }
                         row("Collection type", "Occurrences")
-                        gcEntries.groupBy { it.description }.forEach { (t, u) ->
-                            content += "$t,${u.size}\n"
+                        collectionMetrics.countsByDescription().forEach { (description, count) ->
+                            content += "$description,$count\n"
                             row {
-                                cell(t)
-                                cell(u.size) {
+                                cell(description)
+                                cell(count) {
                                     alignment = TextAlignment.MiddleRight
                                 }
                             }
@@ -93,8 +95,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                             }
                             row("Bucket", "Occurrences")
                             val histogram = Histogram(parameters.histogramBucket.get())
-                            val entries =
-                                histogram.getHistogram(gcEntries.filter { it.description != "Concurrent Mark Cycle" })
+                            val entries = histogram.getHistogram(collectionMetrics.entriesForHistogram())
                             entries.forEach {
                                 contentHistogram += "${it.first},${it.second}\n"
                                 row {

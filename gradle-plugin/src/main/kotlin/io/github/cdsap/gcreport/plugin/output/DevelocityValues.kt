@@ -4,6 +4,7 @@ import com.gradle.develocity.agent.gradle.DevelocityConfiguration
 import io.github.cdsap.gcreport.plugin.GCReportExtension
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
+import io.github.cdsap.gcreport.plugin.model.GCCollectionMetrics
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 
 class DevelocityValues(
@@ -13,18 +14,19 @@ class DevelocityValues(
     private val extension: GCReportExtension,
 ) {
     fun report() {
+        val collectionMetrics = GCCollectionMetrics(gcEntries)
         develocityConfiguration.buildScan {
-            gcEntries.groupBy { it.description }.forEach { t, u ->
-                value("gc-${log.getFileName()}-$t", "${u.size}")
+            collectionMetrics.countsByDescription().forEach { (description, count) ->
+                value("gc-${log.getFileName()}-$description", "$count")
             }
-            val counter = gcEntries.filter { it.description != "Concurrent Mark Cycle" }.count()
+            val counter = collectionMetrics.totalCollections()
             if (counter != 0) {
                 value("gc-${log.getFileName()}-total-collections", "$counter")
             }
             if (extension.histogramEnabled.get()) {
                 val histogram =
                     Histogram(extension.histogramBucket.get()).getHistogram(
-                        gcEntries.filter { it.description != "Concurrent Mark Cycle" },
+                        collectionMetrics.entriesForHistogram(),
                     )
                 var histogramText = "["
                 histogram.forEach {
