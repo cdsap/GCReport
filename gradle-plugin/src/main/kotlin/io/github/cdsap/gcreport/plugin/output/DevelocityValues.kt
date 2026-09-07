@@ -5,8 +5,7 @@ import io.github.cdsap.gcreport.plugin.GCReportExtension
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.GCEntry
-import io.github.cdsap.gcreport.plugin.model.collectionTypeCounts
-import io.github.cdsap.gcreport.plugin.model.entriesForHistogram
+import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
 class DevelocityValues(
     private val develocityConfiguration: DevelocityConfiguration,
@@ -15,18 +14,19 @@ class DevelocityValues(
     private val extension: GCReportExtension,
 ) {
     fun report() {
+        val metrics = GCReportMetrics.from(gcEntries)
         develocityConfiguration.buildScan {
-            gcEntries.collectionTypeCounts().forEach { (description, count) ->
+            metrics.collectionTypeCounts().forEach { (description, count) ->
                 value("gc-${log.getFileName()}-$description", "$count")
             }
-            val counter = gcEntries.entriesForHistogram().size
+            val counter = metrics.totalCollections()
             if (counter != 0) {
                 value("gc-${log.getFileName()}-total-collections", "$counter")
             }
             if (extension.histogramEnabled.get()) {
                 val histogram =
                     Histogram(extension.histogramBucket.get()).getHistogram(
-                        gcEntries.entriesForHistogram(),
+                        metrics.entriesForHistogram(),
                     )
                 var histogramText = "["
                 histogram.forEach {
