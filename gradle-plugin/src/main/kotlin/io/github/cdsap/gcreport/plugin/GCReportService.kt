@@ -6,7 +6,8 @@ import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCCollectionMetrics
+import io.github.cdsap.gcreport.plugin.model.collectionTypeCounts
+import io.github.cdsap.gcreport.plugin.model.entriesForHistogram
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
 import org.gradle.api.file.Directory
 import org.gradle.api.provider.Provider
@@ -40,8 +41,6 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
                 val headers = "Collection type,Occurrences\n"
                 var content = ""
-                val collectionMetrics = GCCollectionMetrics(gcEntries)
-
                 println(
                     table {
                         cellStyle {
@@ -56,7 +55,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                             }
                         }
                         row("Collection type", "Occurrences")
-                        collectionMetrics.countsByDescription().forEach { (description, count) ->
+                        gcEntries.collectionTypeCounts().forEach { (description, count) ->
                             content += "$description,$count\n"
                             row {
                                 cell(description)
@@ -95,7 +94,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                             }
                             row("Bucket", "Occurrences")
                             val histogram = Histogram(parameters.histogramBucket.get())
-                            val entries = histogram.getHistogram(collectionMetrics.entriesForHistogram())
+                            val entries = histogram.getHistogram(gcEntries.entriesForHistogram())
                             entries.forEach {
                                 contentHistogram += "${it.first},${it.second}\n"
                                 row {
