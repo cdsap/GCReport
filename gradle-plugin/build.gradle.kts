@@ -17,6 +17,7 @@ dependencies {
     testImplementation(libs.ktor.client.cio)
     testImplementation(libs.gson)
     testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
 }
 
 tasks.test {

@@ -16,6 +16,7 @@ picnic = { group = "com.jakewharton.picnic", name = "picnic", version.ref = "pic
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor-client-cio" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
 junit-jupiter = { group = "org.junit.jupiter", name = "junit-jupiter" }
+junit-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
 
 [plugins]
 kotlin-jvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
