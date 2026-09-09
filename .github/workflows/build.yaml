@@ -29,12 +29,8 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: Ktlinkt
-        run: ./gradlew ktlintCheck
-
-      - name: test
-        id: test
-        run: ./gradlew test
+      - name: Build
+        run: ./gradlew build
         env:
           GE_API_KEY: ${{ secrets.GE_API }}
           GE_URL: ${{ secrets.GE_URL }}
