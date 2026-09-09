@@ -26,4 +26,19 @@ class GradlePluginBuildConfigTest {
             "gradle/libs.versions.toml must declare junit-platform-launcher",
         )
     }
+
+    @Test
+    fun `validatePlugins enables stricter validation`() {
+        val buildGradle = File("build.gradle.kts").canonicalFile
+        val buildGradleContents = buildGradle.readText()
+
+        assertTrue(
+            buildGradleContents.contains("tasks.validatePlugins"),
+            "build.gradle.kts must configure the validatePlugins task",
+        )
+        assertTrue(
+            buildGradleContents.contains("enableStricterValidation = true"),
+            "build.gradle.kts must enable validatePlugins.enableStricterValidation",
+        )
+    }
 }

@@ -23,6 +23,10 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+tasks.validatePlugins {
+    enableStricterValidation = true
+}
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
     vcsUrl = "https://github.com/cdsap/GCReport.git"
