@@ -6,6 +6,29 @@ import java.io.File
 
 class GradlePluginBuildConfigTest {
     @Test
+    fun `settings centralizes dependency repositories and rejects project repositories`() {
+        val settingsGradle = File("../settings.gradle.kts").canonicalFile
+        val settingsContents = settingsGradle.readText()
+
+        assertTrue(
+            settingsContents.contains("repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS"),
+            "settings.gradle.kts must reject project repository declarations",
+        )
+        assertTrue(
+            settingsContents.contains("mavenCentral()"),
+            "settings.gradle.kts must declare Maven Central for dependency resolution",
+        )
+        assertTrue(
+            settingsContents.contains("gradlePluginPortal()"),
+            "settings.gradle.kts must keep the Plugin Portal for develocity-gradle-plugin resolution",
+        )
+        assertTrue(
+            Regex("""dependencyResolutionManagement\s*\{[\s\S]*gradlePluginPortal\(\)""").containsMatchIn(settingsContents),
+            "gradlePluginPortal() must remain under dependencyResolutionManagement for implementation deps",
+        )
+    }
+
+    @Test
     fun `gradle plugin build declares junit platform launcher on test runtime classpath`() {
         val buildGradle = File("build.gradle.kts").canonicalFile
         val buildGradleContents = buildGradle.readText()
