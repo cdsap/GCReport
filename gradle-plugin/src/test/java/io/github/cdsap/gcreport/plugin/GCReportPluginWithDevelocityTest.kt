@@ -12,6 +12,7 @@ import io.ktor.client.request.parameter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.gradle.testkit.runner.GradleRunner
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -22,6 +23,55 @@ import kotlin.random.Random
 class GCReportPluginWithDevelocityTest {
     @TempDir
     lateinit var testProjectDir: File
+
+    @Test
+    fun `plugin takes Develocity path without requiring live server credentials`() {
+        val gcFile = "gc.log"
+        val gradleProperties = File(testProjectDir, "gradle.properties")
+        val gcLog = "${testProjectDir.absolutePath}/$gcFile"
+        gradleProperties.writeText(
+            """
+            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
+            """.trimIndent(),
+        )
+
+        File(testProjectDir, "settings.gradle.kts").writeText(
+            DevelocityTestSupport.settingsScript(
+                """
+                buildScan {
+                    publishing.onlyIf { false }
+                }
+                """.trimIndent(),
+            ),
+        )
+
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
+                id("io.github.cdsap.gcreport")
+                java
+            }
+
+            gcReport {
+                logs.set(listOf("$gcLog"))
+            }
+            """,
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        // DevelocityConfiguration is present, so GCReportPlugin takes the Develocity branch
+        // (console/CSV reporting stays off unless enableConsoleLog is explicitly enabled).
+        assertFalse(result.output.contains("GC Log: gc.log"))
+        assertFalse(result.output.contains("Collection type"))
+        assertFalse(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+    }
 
     @Test
     fun `plugin generates Output with Gc report for G1`() {
@@ -44,20 +94,16 @@ class GCReportPluginWithDevelocityTest {
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
 
         settingsGradle.writeText(
-            """
-            plugins {
-                id("com.gradle.develocity") version "3.19"
-            }
-            gradleEnterprise {
-                server = "$develocityUrl"
-                accessKey="$develocityAccessKey"
+            DevelocityTestSupport.settingsScript(
+                """
+                server.set("$develocityUrl")
+                accessKey.set("$develocityAccessKey")
                 buildScan {
-                      isUploadInBackground = false
+                      uploadInBackground = false
                       tag("$randomValue")
-
                 }
-            }
-            """.trimIndent(),
+                """.trimIndent(),
+            ),
         )
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
@@ -130,20 +176,16 @@ class GCReportPluginWithDevelocityTest {
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
 
         settingsGradle.writeText(
-            """
-            plugins {
-                id("com.gradle.develocity") version "3.19"
-            }
-            gradleEnterprise {
-                server = "$develocityUrl"
-                accessKey="$develocityAccessKey"
+            DevelocityTestSupport.settingsScript(
+                """
+                server.set("$develocityUrl")
+                accessKey.set("$develocityAccessKey")
                 buildScan {
-                      isUploadInBackground = false
+                      uploadInBackground = false
                       tag("$randomValue")
-
                 }
-            }
-            """.trimIndent(),
+                """.trimIndent(),
+            ),
         )
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
@@ -208,20 +250,16 @@ class GCReportPluginWithDevelocityTest {
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
 
         settingsGradle.writeText(
-            """
-            plugins {
-                id("com.gradle.develocity") version "3.19"
-            }
-            gradleEnterprise {
-                server = "$develocityUrl"
-                accessKey="$develocityAccessKey"
+            DevelocityTestSupport.settingsScript(
+                """
+                server.set("$develocityUrl")
+                accessKey.set("$develocityAccessKey")
                 buildScan {
-                      isUploadInBackground = false
+                      uploadInBackground = false
                       tag("$randomValue")
-
                 }
-            }
-            """.trimIndent(),
+                """.trimIndent(),
+            ),
         )
 
         val gradleProperties = File(testProjectDir, "gradle.properties")

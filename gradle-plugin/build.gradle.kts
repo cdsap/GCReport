@@ -22,6 +22,8 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // Keep TestKit fixtures on the same Develocity version as libs.versions.toml
+    systemProperty("develocityPluginVersion", libs.versions.develocity.get())
 }
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
