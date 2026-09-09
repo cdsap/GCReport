@@ -34,6 +34,32 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
+    fun `main sources do not use Gradle internal APIs and inject BuildEventsListenerRegistry`() {
+        val mainKotlin = File("src/main/kotlin")
+        require(mainKotlin.isDirectory) { "Expected Kotlin sources at ${mainKotlin.absolutePath}" }
+
+        val kotlinSources =
+            mainKotlin.walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
+
+        val internalImportSites =
+            kotlinSources.filter { source ->
+                source.readText().lines().any { line ->
+                    line.trimStart().startsWith("import org.gradle.internal.")
+                }
+            }
+        assertTrue(
+            internalImportSites.isEmpty(),
+            "unexpected org.gradle.internal.* imports in: ${internalImportSites.map { it.name }}",
+        )
+
+        val pluginSource = kotlinSources.single { it.name == "GCReportPlugin.kt" }.readText()
+        assertTrue(pluginSource.contains("@Inject"))
+        assertTrue(pluginSource.contains("BuildEventsListenerRegistry"))
+        assertTrue(pluginSource.contains("registry.onTaskCompletion"))
+        assertTrue(!pluginSource.contains("serviceOf"))
+    }
+
+    @Test
     fun `without Develocity console report remains enabled by default registration path`() {
         val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
