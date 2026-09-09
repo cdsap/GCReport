@@ -1,7 +1,7 @@
 package io.github.cdsap.gcreport.plugin
 
-import com.gradle.develocity.agent.gradle.DevelocityConfiguration
-import io.github.cdsap.gcreport.plugin.report.DevelocityReport
+import io.github.cdsap.gcreport.plugin.report.DevelocityPresence
+import io.github.cdsap.gcreport.plugin.report.DevelocitySupport
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.provider.Property
@@ -13,13 +13,13 @@ import org.gradle.kotlin.dsl.create
 class GCReportPlugin : Plugin<Project> {
     override fun apply(target: Project) {
         target.extensions.create<GCReportExtension>("gcReport")
-        val develocityConfiguration =
-            target.gradle.rootProject.extensions.findByType(DevelocityConfiguration::class.java)
+        // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
+        val develocityExtension = DevelocityPresence.findExtension(target.gradle.rootProject)
         target.gradle.rootProject {
             val extension = target.extensions.getByName("gcReport") as GCReportExtension
-            if (develocityConfiguration != null) {
+            if (develocityExtension != null) {
                 createService(target, extension, extension.enableConsoleLog)
-                DevelocityReport(develocityConfiguration, extension).report()
+                DevelocitySupport.register(develocityExtension, extension)
             } else {
                 createService(target, extension)
             }
