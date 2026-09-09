@@ -26,4 +26,38 @@ class GradlePluginBuildConfigTest {
             "gradle/libs.versions.toml must declare junit-platform-launcher",
         )
     }
+
+    @Test
+    fun `gradle plugin Maven publication uses descriptive artifactId`() {
+        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
+
+        assertTrue(
+            buildGradleContents.contains("""create<MavenPublication>("pluginMaven")"""),
+            "build.gradle.kts must configure the pluginMaven publication",
+        )
+        assertTrue(
+            buildGradleContents.contains("""artifactId = "gcreport-gradle-plugin""""),
+            "pluginMaven publication must use descriptive artifactId gcreport-gradle-plugin",
+        )
+    }
+
+    @Test
+    fun `generated pluginMaven POM has descriptive artifactId`() {
+        val pomFile = File("build/publications/pluginMaven/pom-default.xml").canonicalFile
+        assertTrue(
+            pomFile.isFile,
+            "Expected generated POM at ${pomFile.path}; run generatePomFileForPluginMavenPublication first",
+        )
+
+        val primaryArtifactId =
+            Regex("""<artifactId>([^<]+)</artifactId>""")
+                .find(pomFile.readText())
+                ?.groupValues
+                ?.get(1)
+
+        assertTrue(
+            primaryArtifactId == "gcreport-gradle-plugin",
+            "Expected primary artifactId gcreport-gradle-plugin but was $primaryArtifactId",
+        )
+    }
 }
