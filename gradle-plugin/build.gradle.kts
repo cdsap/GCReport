@@ -1,8 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    `kotlin-dsl`
-    `java-gradle-plugin`
-    `maven-publish`
     alias(libs.plugins.gradle.publish)
     alias(libs.plugins.ktlint)
 }
@@ -11,6 +8,7 @@ group = "io.github.cdsap"
 version = "0.1.0"
 
 dependencies {
+    implementation(gradleApi())
     implementation(libs.develocity)
     implementation(libs.picnic)
     testImplementation(platform(libs.junit))
