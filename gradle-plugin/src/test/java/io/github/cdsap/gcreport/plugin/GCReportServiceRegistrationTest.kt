@@ -46,6 +46,22 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
+    fun `main sources do not use println`() {
+        val mainSources = File("src/main")
+        require(mainSources.isDirectory) { "Expected sources at ${mainSources.absolutePath}" }
+
+        val offenders =
+            mainSources
+                .walkTopDown()
+                .filter { it.isFile && it.extension in setOf("kt", "java") }
+                .filter { it.readText().contains("println(") }
+                .map { it.relativeTo(mainSources).path }
+                .toList()
+
+        assertTrue(offenders.isEmpty(), "println found in src/main: $offenders")
+    }
+
+    @Test
     fun `without Develocity console report remains enabled by default registration path`() {
         val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
