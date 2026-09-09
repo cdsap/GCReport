@@ -132,4 +132,40 @@ class GCReportServiceRegistrationTest {
         assertFalse(result.output.contains("Collection type"))
         assertFalse(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
     }
+
+    @Test
+    fun `apply reuses extension instance and looks up Develocity inside rootProject receiver`() {
+        val plugin =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPlugin.kt").readText()
+
+        assertTrue(
+            plugin.contains("val extension = target.extensions.create<GCReportExtension>(\"gcReport\")"),
+        )
+        assertFalse(plugin.contains("getByName(\"gcReport\")"))
+        assertFalse(plugin.contains("as GCReportExtension"))
+
+        val applyBody =
+            plugin
+                .substringAfter("override fun apply(target: Project) {")
+                .substringBeforeLast("}")
+                .trim()
+        val rootProjectBlockStart = applyBody.indexOf("target.gradle.rootProject {")
+        assertTrue(rootProjectBlockStart >= 0, "expected rootProject receiver block")
+
+        val beforeRootProject = applyBody.substring(0, rootProjectBlockStart)
+        assertFalse(
+            beforeRootProject.contains("findByType"),
+            "Develocity lookup must not run eagerly before the rootProject block",
+        )
+
+        val rootProjectBlock = applyBody.substring(rootProjectBlockStart)
+        assertTrue(
+            rootProjectBlock.contains("extensions.findByType(DevelocityConfiguration::class.java)"),
+            "Develocity lookup should use the rootProject receiver",
+        )
+        assertFalse(
+            rootProjectBlock.contains("target.gradle.rootProject.extensions.findByType"),
+            "unused rootProject receiver: lookup should not re-qualify through target.gradle.rootProject",
+        )
+    }
 }
