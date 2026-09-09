@@ -10,6 +10,10 @@ plugins {
 group = "io.github.cdsap"
 version = "0.1.0"
 
+kotlin {
+    jvmToolchain(11)
+}
+
 dependencies {
     implementation(libs.develocity)
     implementation(libs.picnic)
