@@ -8,21 +8,18 @@ import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.internal.extensions.core.serviceOf
-import org.gradle.kotlin.dsl.create
 
 class GCReportPlugin : Plugin<Project> {
     override fun apply(target: Project) {
-        target.extensions.create<GCReportExtension>("gcReport")
+        target.extensions.create("gcReport", GCReportExtension::class.java)
         val develocityConfiguration =
             target.gradle.rootProject.extensions.findByType(DevelocityConfiguration::class.java)
-        target.gradle.rootProject {
-            val extension = target.extensions.getByName("gcReport") as GCReportExtension
-            if (develocityConfiguration != null) {
-                createService(target, extension, extension.enableConsoleLog)
-                DevelocityReport(develocityConfiguration, extension).report()
-            } else {
-                createService(target, extension)
-            }
+        val extension = target.extensions.getByName("gcReport") as GCReportExtension
+        if (develocityConfiguration != null) {
+            createService(target, extension, extension.enableConsoleLog)
+            DevelocityReport(develocityConfiguration, extension).report()
+        } else {
+            createService(target, extension)
         }
     }
 
@@ -35,13 +32,14 @@ class GCReportPlugin : Plugin<Project> {
             project.gradle.sharedServices.registerIfAbsent(
                 "gcReportService",
                 GCReportService::class.java,
-            ) {
+            ) { serviceSpec ->
                 val buildOutput = project.layout.buildDirectory.dir("reports/gcreport")
-                parameters.logs = extension.logs
-                parameters.histogramEnabled = extension.histogramEnabled
-                parameters.histogramBucket = extension.histogramBucket
-                parameters.buildOutput = buildOutput
-                parameters.enabledReport = if (enableLog == null) project.provider { true } else enableLog
+                serviceSpec.parameters.logs = extension.logs
+                serviceSpec.parameters.histogramEnabled = extension.histogramEnabled
+                serviceSpec.parameters.histogramBucket = extension.histogramBucket
+                serviceSpec.parameters.buildOutput = buildOutput
+                serviceSpec.parameters.enabledReport =
+                    if (enableLog == null) project.provider { true } else enableLog
             }
         project.serviceOf<BuildEventsListenerRegistry>().onTaskCompletion(service)
     }
