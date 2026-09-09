@@ -1,6 +1,5 @@
 package io.github.cdsap.gcreport.plugin
 
-import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -71,7 +70,7 @@ class GCReportServiceRegistrationTest {
         )
 
         val result =
-            GradleRunner.create()
+            GradleTestKit.runner()
                 .withProjectDir(testProjectDir)
                 .withArguments("tasks")
                 .withPluginClasspath()
@@ -122,7 +121,7 @@ class GCReportServiceRegistrationTest {
         )
 
         val result =
-            GradleRunner.create()
+            GradleTestKit.runner()
                 .withProjectDir(testProjectDir)
                 .withArguments("tasks")
                 .withPluginClasspath()

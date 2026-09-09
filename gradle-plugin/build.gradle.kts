@@ -22,6 +22,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // Forward CI/local -DtestGradleVersion (or TEST_GRADLE_VERSION) into TestKit runners.
+    val testGradleVersion =
+        providers.systemProperty("testGradleVersion")
+            .orElse(providers.environmentVariable("TEST_GRADLE_VERSION"))
+    if (testGradleVersion.isPresent) {
+        systemProperty("testGradleVersion", testGradleVersion.get())
+    }
 }
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
