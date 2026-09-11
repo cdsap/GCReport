@@ -29,7 +29,7 @@ jobs:
           distribution: 'zulu'
           java-version: 17
 
-      - name: Ktlinkt
+      - name: Ktlint
         run: ./gradlew ktlintCheck
 
       - name: test
