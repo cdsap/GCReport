@@ -17,12 +17,15 @@ class ServiceHandler(
                 "gcReportService",
                 GCReportService::class.java,
             ) {
-                val buildOutput = project.layout.buildDirectory.dir("reports/gcreport")
-                parameters.logs = extension.logs
-                parameters.histogramEnabled = extension.histogramEnabled
-                parameters.histogramBucket = extension.histogramBucket
-                parameters.buildOutput = buildOutput
-                parameters.enabledReport = if (enableLog == null) project.provider { true } else enableLog
+                parameters.logs.set(extension.logs)
+                parameters.histogramEnabled.set(extension.histogramEnabled)
+                parameters.histogramBucket.set(extension.histogramBucket)
+                parameters.buildOutput.set(project.layout.buildDirectory.dir("reports/gcreport"))
+                if (enableLog == null) {
+                    parameters.enabledReport.convention(true)
+                } else {
+                    parameters.enabledReport.set(enableLog)
+                }
             }
         project.serviceOf<BuildEventsListenerRegistry>().onTaskCompletion(service)
     }
