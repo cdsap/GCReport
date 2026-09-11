@@ -10,6 +10,15 @@ plugins {
 group = "io.github.cdsap"
 version = "0.1.0"
 
+// Project directory is gradle-plugin; override so Maven coordinates are descriptive.
+publishing {
+    publications {
+        create<MavenPublication>("pluginMaven") {
+            artifactId = "gcreport-gradle-plugin"
+        }
+    }
+}
+
 dependencies {
     implementation(libs.develocity)
     implementation(libs.picnic)
@@ -22,6 +31,7 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    dependsOn(tasks.named("generatePomFileForPluginMavenPublication"))
 }
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
