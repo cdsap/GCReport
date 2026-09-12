@@ -1,6 +1,7 @@
 package io.github.cdsap.gcreport.plugin
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.DataInputStream
@@ -40,6 +41,28 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
+    fun `develocity is compileOnly so it is not published as a runtime dependency`() {
+        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
+
+        assertTrue(
+            buildGradleContents.contains("compileOnly(libs.develocity)"),
+            "build.gradle.kts must declare develocity as compileOnly",
+        )
+        assertTrue(
+            buildGradleContents.contains("testImplementation(libs.develocity)"),
+            "build.gradle.kts must declare develocity on the test classpath",
+        )
+        assertFalse(
+            buildGradleContents.contains("implementation(libs.develocity)"),
+            "build.gradle.kts must not declare develocity as implementation (leaks onto consumers)",
+        )
+        assertTrue(
+            buildGradleContents.contains("pluginUnderTestMetadata"),
+            "build.gradle.kts must keep Develocity on the TestKit plugin classpath via pluginUnderTestMetadata",
+        )
+    }
+
+    @Test
     fun `compiled plugin classes target java 11 bytecode`() {
         val classFile =
             File("build/classes/kotlin/main/io/github/cdsap/gcreport/plugin/GCReportPlugin.class")
@@ -64,5 +87,16 @@ class GradlePluginBuildConfigTest {
     private companion object {
         const val CLASS_FILE_MAGIC = -0x35014542 // 0xCAFEBABE
         const val JAVA_11_MAJOR_VERSION = 55
+    }
+
+    @Test
+    fun `GCReportPlugin does not hard-reference DevelocityConfiguration`() {
+        val pluginSource =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPlugin.kt").canonicalFile
+
+        assertFalse(
+            pluginSource.readText().contains("DevelocityConfiguration"),
+            "GCReportPlugin must not reference DevelocityConfiguration so it can load without Develocity on the classpath",
+        )
     }
 }
