@@ -70,6 +70,24 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
+    fun `Develocity providers are resolved only inside buildFinished`() {
+        val values = kotlinSources().single { it.name == "DevelocityValues.kt" }.readText()
+        val report = kotlinSources().single { it.name == "DevelocityReport.kt" }.readText()
+
+        assertFalse(values.contains("GCReportExtension"))
+        assertFalse(values.contains(".get()"))
+        assertTrue(values.contains("histogramEnabled: Boolean"))
+        assertTrue(values.contains("histogramBucket: Bucket"))
+
+        val buildFinishedIndex = report.indexOf("develocityConfiguration.buildScan.buildFinished")
+        assertTrue(buildFinishedIndex >= 0)
+        assertTrue(buildFinishedIndex < report.indexOf("extension.logs.get()"))
+        assertTrue(buildFinishedIndex < report.indexOf("extension.histogramEnabled.get()"))
+        assertTrue(buildFinishedIndex < report.indexOf("extension.histogramBucket.get()"))
+        assertFalse(report.substring(0, buildFinishedIndex).contains(".get()"))
+    }
+
+    @Test
     fun `without Develocity console report remains enabled by default registration path`() {
         val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
@@ -196,4 +214,6 @@ class GCReportServiceRegistrationTest {
         assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
         assertTrue(testProjectDir.resolve("build/reports/gcreport/histogram_gc.csv").exists())
     }
+
+    private fun kotlinSources(): List<File> = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
 }
