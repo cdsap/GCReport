@@ -23,6 +23,13 @@ dependencies {
 
 tasks.test {
     useJUnitPlatform()
+    // Forward CI/local -DtestGradleVersion (or TEST_GRADLE_VERSION) into TestKit runners.
+    val testGradleVersion =
+        providers.systemProperty("testGradleVersion")
+            .orElse(providers.environmentVariable("TEST_GRADLE_VERSION"))
+    if (testGradleVersion.isPresent) {
+        systemProperty("testGradleVersion", testGradleVersion.get())
+    }
 }
 
 // TestKit uses an isolated plugin classpath; include Develocity there so optional integration

@@ -11,7 +11,6 @@ import io.ktor.client.request.header
 import io.ktor.client.request.parameter
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
-import org.gradle.testkit.runner.GradleRunner
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Assumptions.assumeTrue
 import org.junit.jupiter.api.Test
@@ -75,7 +74,7 @@ class GCReportPluginWithDevelocityTest {
             """,
         )
 
-        GradleRunner.create()
+        GradleTestKit.runner()
             .withProjectDir(testProjectDir)
             .withArguments("tasks")
             .withPluginClasspath()
@@ -161,7 +160,7 @@ class GCReportPluginWithDevelocityTest {
             """,
         )
 
-        GradleRunner.create()
+        GradleTestKit.runner()
             .withProjectDir(testProjectDir)
             .withArguments("tasks")
             .withPluginClasspath()
@@ -249,7 +248,7 @@ class GCReportPluginWithDevelocityTest {
             """,
         )
 
-        GradleRunner.create()
+        GradleTestKit.runner()
             .withProjectDir(testProjectDir)
             .withArguments("tasks")
             .withPluginClasspath()

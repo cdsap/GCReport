@@ -98,6 +98,11 @@ Bucket,Occurrences
 4.92-End,1
 ```
 
+### Compatibility
+* **Gradle:** **8.9+** (CI exercises **8.9**, **8.12.1**, and **8.14.3**). The lower bound matches the Gradle release that relocated the internal `serviceOf` API this plugin currently uses.
+* **Java:** CI tests on **Java 17** and **21** (Zulu). These are the JDKs used to run Gradle and produce the GC logs the plugin parses.
+* **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`) for **G1** and **Parallel**.
+
 ### Considerations
 * Supported GC types:
     - G1
