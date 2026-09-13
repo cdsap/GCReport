@@ -149,4 +149,44 @@ class GCReportServiceRegistrationTest {
         assertFalse(result.output.contains("Collection type"))
         assertFalse(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
     }
+
+    @Test
+    fun `managed extension conventions remain overridable by consumers`() {
+        val gradleProperties = File(testProjectDir, "gradle.properties")
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        gradleProperties.writeText(
+            """
+            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
+            """.trimIndent(),
+        )
+
+        val buildFile = File(testProjectDir, "build.gradle.kts")
+        buildFile.writeText(
+            """
+            plugins {
+                id("io.github.cdsap.gcreport")
+                java
+            }
+
+            gcReport {
+                logs.set(listOf("$gcLog"))
+                histogramEnabled.set(true)
+                histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
+            }
+            """,
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("GC Log: gc.log"))
+        assertTrue(result.output.contains("GC Histogram: gc.log"))
+        assertTrue(result.output.contains("Type: SquareRoot"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/histogram_gc.csv").exists())
+    }
 }
