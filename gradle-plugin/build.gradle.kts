@@ -10,9 +10,14 @@ plugins {
 group = "io.github.cdsap"
 version = "0.1.0"
 
+kotlin {
+    jvmToolchain(11)
+}
+
 dependencies {
-    implementation(libs.develocity)
+    compileOnly(libs.develocity)
     implementation(libs.picnic)
+    testImplementation(libs.develocity)
     testImplementation(platform(libs.junit))
     testImplementation(libs.ktor.client.cio)
     testImplementation(libs.gson)
@@ -23,6 +28,17 @@ dependencies {
 tasks.test {
     useJUnitPlatform()
 }
+
+// TestKit uses an isolated plugin classpath; include Develocity there so optional integration
+// tests can load DevelocityConfiguration without publishing it as a consumer runtime dependency.
+tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {
+    pluginClasspath.from(
+        configurations.compileClasspath.map { classpath ->
+            classpath.filter { it.name.startsWith("develocity-gradle-plugin") }
+        },
+    )
+}
+
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
     vcsUrl = "https://github.com/cdsap/GCReport.git"

@@ -1,11 +1,10 @@
 package io.github.cdsap.gcreport.plugin
 
-import com.gradle.develocity.agent.gradle.DevelocityConfiguration
-import io.github.cdsap.gcreport.plugin.report.DevelocityReport
+import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.report.DevelocityPresence
+import io.github.cdsap.gcreport.plugin.report.DevelocitySupport
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.create
 import javax.inject.Inject
@@ -16,37 +15,25 @@ abstract class GCReportPlugin
         private val registry: BuildEventsListenerRegistry,
     ) : Plugin<Project> {
         override fun apply(target: Project) {
-            target.extensions.create<GCReportExtension>("gcReport")
-            val develocityConfiguration =
-                target.gradle.rootProject.extensions.findByType(DevelocityConfiguration::class.java)
+            val extension =
+                target.extensions.create<GCReportExtension>("gcReport").apply {
+                    histogramEnabled.convention(false)
+                    histogramBucket.convention(Bucket.FreedmanDiaconis)
+                    enableConsoleLog.convention(false)
+                }
+            // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
+            val develocityExtension = DevelocityPresence.findExtension(target.gradle.rootProject)
             target.gradle.rootProject {
-                val extension = target.extensions.getByName("gcReport") as GCReportExtension
-                if (develocityConfiguration != null) {
-                    createService(target, extension, extension.enableConsoleLog)
-                    DevelocityReport(develocityConfiguration, extension).report()
-                } else {
-                    createService(target, extension)
+                val serviceHandler =
+                    if (develocityExtension != null) {
+                        ServiceHandler(target, extension, extension.enableConsoleLog)
+                    } else {
+                        ServiceHandler(target, extension)
+                    }
+                registry.onTaskCompletion(serviceHandler.createService())
+                if (develocityExtension != null) {
+                    DevelocitySupport.register(develocityExtension, extension)
                 }
             }
-        }
-
-        private fun createService(
-            project: Project,
-            extension: GCReportExtension,
-            enableLog: Property<Boolean>? = null,
-        ) {
-            val service: Provider<GCReportService> =
-                project.gradle.sharedServices.registerIfAbsent(
-                    "gcReportService",
-                    GCReportService::class.java,
-                ) {
-                    val buildOutput = project.layout.buildDirectory.dir("reports/gcreport")
-                    parameters.logs = extension.logs
-                    parameters.histogramEnabled = extension.histogramEnabled
-                    parameters.histogramBucket = extension.histogramBucket
-                    parameters.buildOutput = buildOutput
-                    parameters.enabledReport = if (enableLog == null) project.provider { true } else enableLog
-                }
-            registry.onTaskCompletion(service)
         }
     }
