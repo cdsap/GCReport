@@ -31,12 +31,46 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
+    fun `gradle plugin Maven publication uses descriptive artifactId`() {
+        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
+
+        assertTrue(
+            buildGradleContents.contains("""create<MavenPublication>("pluginMaven")"""),
+            "build.gradle.kts must configure the pluginMaven publication",
+        )
+        assertTrue(
+            buildGradleContents.contains("""artifactId = "gcreport-gradle-plugin""""),
+            "pluginMaven publication must use descriptive artifactId gcreport-gradle-plugin",
+        )
+    }
+
+    @Test
     fun `gradle plugin build pins jvm toolchain to java 11`() {
         val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
 
         assertTrue(
             buildGradleContents.contains("jvmToolchain(11)"),
             "build.gradle.kts must pin kotlin jvmToolchain(11) so published bytecode is stable",
+        )
+    }
+
+    @Test
+    fun `generated pluginMaven POM has descriptive artifactId`() {
+        val pomFile = File("build/publications/pluginMaven/pom-default.xml").canonicalFile
+        assertTrue(
+            pomFile.isFile,
+            "Expected generated POM at ${pomFile.path}; run generatePomFileForPluginMavenPublication first",
+        )
+
+        val primaryArtifactId =
+            Regex("""<artifactId>([^<]+)</artifactId>""")
+                .find(pomFile.readText())
+                ?.groupValues
+                ?.get(1)
+
+        assertTrue(
+            primaryArtifactId == "gcreport-gradle-plugin",
+            "Expected primary artifactId gcreport-gradle-plugin but was $primaryArtifactId",
         )
     }
 
