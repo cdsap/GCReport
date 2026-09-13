@@ -5,8 +5,15 @@ If [Develocity](https://gradle.com/develocity/) is configured in the project, th
 Analyzing the types of garbage collections that occurred during the build can provide valuable insights into performance issues.
 
 **This plugin is intended for performance investigations and is not meant to be enabled in regular builds.**
+### Compatibility
+* **Gradle:** **8.9+**. The plugin currently resolves `BuildEventsListenerRegistry` through Gradle's internal `org.gradle.internal.extensions.core.serviceOf` helper, which exists at that path starting in Gradle 8.9.
+* **Java:** **11+**. Published plugin bytecode is pinned with `jvmToolchain(11)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 11 or newer.
+* **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
+
 ### Usage
 #### Apply the plugin
+Plugin id / marker: `io.github.cdsap.gcreport` (current version `0.1.0`).
+
 ```kotlin
 plugins {
   id("io.github.cdsap.gcreport") version "0.1.0"
@@ -102,9 +109,7 @@ Bucket,Occurrences
 * Minimum Java version: **11**. Published plugin bytecode is pinned with `jvmToolchain(11)`, so the class-file target does not depend on which JDK runs the build.
 
 ### Considerations
-* Supported GC types:
-    - G1
-    - Parallel
+* Supported GC collectors and log formats are listed under [Compatibility](#compatibility).
 * The plugin output may be unreliable for incremental builds where log rotations have occurred.
 
 
