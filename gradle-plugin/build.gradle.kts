@@ -39,6 +39,10 @@ tasks.test {
     dependsOn(tasks.named("generatePomFileForPluginMavenPublication"))
 }
 
+tasks.validatePlugins {
+    enableStricterValidation = true
+}
+
 // TestKit uses an isolated plugin classpath; include Develocity there so optional integration
 // tests can load DevelocityConfiguration without publishing it as a consumer runtime dependency.
 tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {
@@ -48,7 +52,6 @@ tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {
         },
     )
 }
-
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
     vcsUrl = "https://github.com/cdsap/GCReport.git"
