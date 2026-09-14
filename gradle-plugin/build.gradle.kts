@@ -34,9 +34,17 @@ dependencies {
     testRuntimeOnly(libs.junit.platform.launcher)
 }
 
+tasks.withType<JavaCompile>().configureEach {
+    options.encoding = "UTF-8"
+}
+
 tasks.test {
     useJUnitPlatform()
     dependsOn(tasks.named("generatePomFileForPluginMavenPublication"))
+}
+
+tasks.validatePlugins {
+    enableStricterValidation = true
 }
 
 // TestKit uses an isolated plugin classpath; include Develocity there so optional integration
@@ -48,7 +56,6 @@ tasks.named<PluginUnderTestMetadata>("pluginUnderTestMetadata") {
         },
     )
 }
-
 gradlePlugin {
     website = "https://github.com/cdsap/GCReport"
     vcsUrl = "https://github.com/cdsap/GCReport.git"

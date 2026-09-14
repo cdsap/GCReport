@@ -22,7 +22,7 @@ class GradlePropertiesTest {
         assertEquals("true", properties.getProperty("org.gradle.configuration-cache"))
         assertEquals("true", properties.getProperty("org.gradle.parallel"))
         assertEquals(
-            "-Xmx2g -XX:MaxMetaspaceSize=768m",
+            "-Xmx2g -XX:MaxMetaspaceSize=768m -Dfile.encoding=UTF-8",
             properties.getProperty("org.gradle.jvmargs"),
         )
     }

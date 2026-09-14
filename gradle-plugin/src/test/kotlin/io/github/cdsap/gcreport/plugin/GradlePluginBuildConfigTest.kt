@@ -9,6 +9,29 @@ import java.io.File
 
 class GradlePluginBuildConfigTest {
     @Test
+    fun `settings centralizes dependency repositories and rejects project repositories`() {
+        val settingsGradle = File("../settings.gradle.kts").canonicalFile
+        val settingsContents = settingsGradle.readText()
+
+        assertTrue(
+            settingsContents.contains("repositoriesMode = RepositoriesMode.FAIL_ON_PROJECT_REPOS"),
+            "settings.gradle.kts must reject project repository declarations",
+        )
+        assertTrue(
+            settingsContents.contains("mavenCentral()"),
+            "settings.gradle.kts must declare Maven Central for dependency resolution",
+        )
+        assertTrue(
+            settingsContents.contains("gradlePluginPortal()"),
+            "settings.gradle.kts must keep the Plugin Portal for develocity-gradle-plugin resolution",
+        )
+        assertTrue(
+            Regex("""dependencyResolutionManagement\s*\{[\s\S]*gradlePluginPortal\(\)""").containsMatchIn(settingsContents),
+            "gradlePluginPortal() must remain under dependencyResolutionManagement for implementation deps",
+        )
+    }
+
+    @Test
     fun `gradle plugin build declares junit platform launcher on test runtime classpath`() {
         val buildGradle = File("build.gradle.kts").canonicalFile
         val buildGradleContents = buildGradle.readText()
@@ -20,6 +43,21 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
+    fun `gradle plugin build pins JavaCompile encoding to UTF-8`() {
+        val buildGradle = File("build.gradle.kts").canonicalFile
+        val buildGradleContents = buildGradle.readText()
+
+        assertTrue(
+            buildGradleContents.contains("tasks.withType<JavaCompile>().configureEach"),
+            "build.gradle.kts must configure JavaCompile tasks",
+        )
+        assertTrue(
+            buildGradleContents.contains("options.encoding = \"UTF-8\""),
+            "build.gradle.kts must set JavaCompile options.encoding to UTF-8",
+        )
+    }
+
+    @Test
     fun `version catalog declares junit platform launcher`() {
         val versionCatalog = File("../gradle/libs.versions.toml").canonicalFile
         val versionCatalogContents = versionCatalog.readText()
@@ -27,6 +65,21 @@ class GradlePluginBuildConfigTest {
         assertTrue(
             versionCatalogContents.contains("junit-platform-launcher"),
             "gradle/libs.versions.toml must declare junit-platform-launcher",
+        )
+    }
+
+    @Test
+    fun `validatePlugins enables stricter validation`() {
+        val buildGradle = File("build.gradle.kts").canonicalFile
+        val buildGradleContents = buildGradle.readText()
+
+        assertTrue(
+            buildGradleContents.contains("tasks.validatePlugins"),
+            "build.gradle.kts must configure the validatePlugins task",
+        )
+        assertTrue(
+            buildGradleContents.contains("enableStricterValidation = true"),
+            "build.gradle.kts must enable validatePlugins.enableStricterValidation",
         )
     }
 
