@@ -39,6 +39,8 @@ tasks.withType<JavaCompile>().configureEach {
 tasks.test {
     useJUnitPlatform()
     dependsOn(tasks.named("generatePomFileForPluginMavenPublication"))
+    // Keep TestKit fixtures on the same Develocity version as libs.versions.toml
+    systemProperty("develocityPluginVersion", libs.versions.develocity.get())
 }
 
 tasks.validatePlugins {

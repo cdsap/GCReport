@@ -211,4 +211,22 @@ class GradlePluginBuildConfigTest {
             "GCReportPlugin must not reference DevelocityConfiguration so it can load without Develocity on the classpath",
         )
     }
+
+    @Test
+    fun `test task injects Develocity plugin version from the version catalog`() {
+        assertTrue(
+            buildGradleContents.contains("systemProperty(\"develocityPluginVersion\", libs.versions.develocity.get())"),
+            "build.gradle.kts must inject libs.versions.develocity into tests",
+        )
+
+        val versionCatalog = File("../gradle/libs.versions.toml").canonicalFile.readText()
+        val catalogVersion =
+            Regex("""(?m)^develocity\s*=\s*"([^"]+)"""").find(versionCatalog)?.groupValues?.get(1)
+        requireNotNull(catalogVersion) { "develocity version missing from libs.versions.toml" }
+
+        assertTrue(
+            DevelocityTestSupport.pluginVersion() == catalogVersion,
+            "TestKit Develocity version must match the version catalog ($catalogVersion)",
+        )
+    }
 }

@@ -76,16 +76,13 @@ class GCReportServiceRegistrationTest {
 
         val settingsGradle = File(testProjectDir, "settings.gradle.kts")
         settingsGradle.writeText(
-            """
-            plugins {
-                id("com.gradle.develocity") version "3.19"
-            }
-            develocity {
+            DevelocityTestSupport.settingsScript(
+                """
                 buildScan {
                     publishing.onlyIf { false }
                 }
-            }
-            """.trimIndent(),
+                """.trimIndent(),
+            ),
         )
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
@@ -127,16 +124,13 @@ class GCReportServiceRegistrationTest {
 
         val settingsGradle = File(testProjectDir, "settings.gradle.kts")
         settingsGradle.writeText(
-            """
-            plugins {
-                id("com.gradle.develocity") version "3.19"
-            }
-            develocity {
+            DevelocityTestSupport.settingsScript(
+                """
                 buildScan {
                     publishing.onlyIf { false }
                 }
-            }
-            """.trimIndent(),
+                """.trimIndent(),
+            ),
         )
 
         val buildFile = File(testProjectDir, "build.gradle.kts")
