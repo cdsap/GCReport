@@ -21,9 +21,9 @@ abstract class GCReportPlugin
                     histogramBucket.convention(Bucket.FreedmanDiaconis)
                     enableConsoleLog.convention(false)
                 }
-            // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
-            val develocityExtension = DevelocityPresence.findExtension(target.gradle.rootProject)
             target.gradle.rootProject {
+                // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
+                val develocityExtension = DevelocityPresence.findExtension(this)
                 val serviceHandler =
                     if (develocityExtension != null) {
                         ServiceHandler(target, extension, extension.enableConsoleLog)
