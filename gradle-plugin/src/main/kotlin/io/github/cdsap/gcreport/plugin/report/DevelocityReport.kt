@@ -12,9 +12,18 @@ class DevelocityReport(
 ) {
     fun report() {
         develocityConfiguration.buildScan.buildFinished {
-            extension.logs.get().filter { File(it).exists() }.forEach {
+            val logs = extension.logs.get()
+            val histogramEnabled = extension.histogramEnabled.get()
+            val histogramBucket = extension.histogramBucket.get()
+            logs.filter { File(it).exists() }.forEach {
                 val gcEntries = GCLogReader(File(it)).parse()
-                DevelocityValues(develocityConfiguration, gcEntries, it, extension).report()
+                DevelocityValues(
+                    develocityConfiguration,
+                    gcEntries,
+                    it,
+                    histogramEnabled,
+                    histogramBucket,
+                ).report()
             }
         }
     }
