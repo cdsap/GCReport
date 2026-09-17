@@ -98,6 +98,9 @@ Bucket,Occurrences
 4.92-End,1
 ```
 
+### Compatibility
+* Minimum Java version: **11**. Published plugin bytecode is pinned with `jvmToolchain(11)`, so the class-file target does not depend on which JDK runs the build.
+
 ### Considerations
 * Supported GC types:
     - G1

@@ -1,6 +1,7 @@
 package io.github.cdsap.gcreport.plugin
 
 import org.gradle.testkit.runner.GradleRunner
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
@@ -124,6 +125,48 @@ class GCReportPluginWithoutDevelocityTest {
         assertTrue(result.output.contains("Collection type"))
         assertTrue(result.output.contains("GC Histogram: gc.log"))
         assertTrue(result.output.contains("Type: SquareRoot"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/histogram_gc.csv").exists())
+    }
+
+    @Test
+    fun `plugin report output is suppressed with quiet`() {
+        val gradleProperties = File(testProjectDir, "gradle.properties")
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        gradleProperties.writeText(
+            """
+            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
+            """.trimIndent(),
+        )
+
+        val buildFile = File(testProjectDir, "build.gradle.kts")
+
+        buildFile.writeText(
+            """
+            plugins {
+                id("io.github.cdsap.gcreport")
+                java
+            }
+
+            gcReport {
+                logs.set(listOf("$gcLog"))
+                histogramEnabled.set(true)
+                histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
+            }
+            """,
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks", "--quiet")
+                .withPluginClasspath()
+                .build()
+
+        assertFalse(result.output.contains("GC Log: gc.log"))
+        assertFalse(result.output.contains("Collection type"))
+        assertFalse(result.output.contains("GC Histogram: gc.log"))
+        assertFalse(result.output.contains("Type: SquareRoot"))
         assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
         assertTrue(testProjectDir.resolve("build/reports/gcreport/histogram_gc.csv").exists())
     }
