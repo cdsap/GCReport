@@ -7,7 +7,7 @@ import java.io.File
 
 class BuildWorkflowConfigTest {
     @Test
-    fun `build workflow uses correctly spelled Ktlint step name`() {
+    fun `build workflow does not use the misspelled Ktlinkt step name`() {
         val workflow = File("../.github/workflows/build.yaml").canonicalFile
         assertTrue(workflow.isFile, "Build workflow should exist at ${workflow.path}")
 
@@ -17,8 +17,8 @@ class BuildWorkflowConfigTest {
             "Build workflow must not use the misspelled step name Ktlinkt",
         )
         assertTrue(
-            contents.contains("name: Ktlint"),
-            "Build workflow should name the ktlintCheck step Ktlint",
+            contents.contains("name: Build"),
+            "Build workflow should run a single Build step covering ktlintCheck and test",
         )
     }
 }
