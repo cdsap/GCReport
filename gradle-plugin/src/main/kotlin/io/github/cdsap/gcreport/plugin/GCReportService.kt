@@ -9,6 +9,7 @@ import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.logging.Logging
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.services.BuildService
@@ -26,6 +27,8 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         val enabledReport: Property<Boolean>
     }
 
+    private val logger = Logging.getLogger(GCReportService::class.java)
+
     override fun onFinish(event: FinishEvent?) {}
 
     override fun close() {
@@ -42,7 +45,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                 val headers = "Collection type,Occurrences\n"
                 var content = ""
                 val metrics = GCReportMetrics.from(gcEntries)
-                println(
+                logger.lifecycle(
                     table {
                         cellStyle {
                             alignment = TextAlignment.MiddleLeft
@@ -75,7 +78,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                     val headersHistogram = "Bucket,Occurrences\n"
                     var contentHistogram = ""
 
-                    println(
+                    logger.lifecycle(
                         table {
                             cellStyle {
                                 alignment = TextAlignment.MiddleLeft
@@ -105,7 +108,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                                     }
                                 }
                             }
-                        },
+                        }.toString(),
                     )
                     fileHistogram.writeText(headersHistogram + contentHistogram)
                 }
