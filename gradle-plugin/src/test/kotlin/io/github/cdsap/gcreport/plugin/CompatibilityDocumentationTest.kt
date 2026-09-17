@@ -1,6 +1,7 @@
 package io.github.cdsap.gcreport.plugin
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
@@ -67,15 +68,23 @@ class CompatibilityDocumentationTest {
     }
 
     @Test
-    fun `service handler still depends on the gradle 8_9 serviceOf package`() {
-        val serviceHandler =
-            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/ServiceHandler.kt")
+    fun `plugin injects BuildEventsListenerRegistry matching documented gradle floor`() {
+        val plugin =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPlugin.kt")
                 .canonicalFile
                 .readText()
 
         assertTrue(
-            serviceHandler.contains("org.gradle.internal.extensions.core.serviceOf"),
-            "Minimum Gradle $MINIMUM_GRADLE_VERSION+ in the README is tied to this serviceOf import path",
+            plugin.contains("BuildEventsListenerRegistry"),
+            "Minimum Gradle $MINIMUM_GRADLE_VERSION+ in the README is tied to BuildEventsListenerRegistry injection",
+        )
+        assertTrue(
+            plugin.contains("@Inject"),
+            "GCReportPlugin must obtain BuildEventsListenerRegistry via @Inject",
+        )
+        assertFalse(
+            plugin.contains("org.gradle.internal.extensions.core.serviceOf"),
+            "GCReportPlugin must not depend on the internal serviceOf helper",
         )
     }
 

@@ -6,7 +6,7 @@ Analyzing the types of garbage collections that occurred during the build can pr
 
 **This plugin is intended for performance investigations and is not meant to be enabled in regular builds.**
 ### Compatibility
-* **Gradle:** **8.9+**. The plugin currently resolves `BuildEventsListenerRegistry` through Gradle's internal `org.gradle.internal.extensions.core.serviceOf` helper, which exists at that path starting in Gradle 8.9.
+* **Gradle:** **8.9+**. The plugin obtains `BuildEventsListenerRegistry` via constructor injection (`@Inject`) and registers a build service that listens for task completion.
 * **Java:** **11+**. Published plugin bytecode is pinned with `jvmToolchain(11)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 11 or newer.
 * **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
 
