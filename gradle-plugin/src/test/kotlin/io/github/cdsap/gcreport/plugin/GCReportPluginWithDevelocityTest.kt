@@ -317,4 +317,52 @@ class GCReportPluginWithDevelocityTest {
         assertTrue(gcLogs.any { it.name == "gc-$gcFile-total-collections" })
         assertTrue(gcLogs.any { it.name == "gc-$gcFile-histogram" })
     }
+
+    @Test
+    fun `plugin applies alongside Develocity with compileOnly classpath`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        File(testProjectDir, "gradle.properties").writeText(
+            """
+            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
+            """.trimIndent(),
+        )
+        File(testProjectDir, "settings.gradle.kts").writeText(
+            """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
+            ${DevelocityTestSupport.settingsScript(
+                """
+                buildScan {
+                    publishing.onlyIf { false }
+                }
+                """.trimIndent(),
+            )}
+            """.trimIndent(),
+        )
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
+                id("io.github.cdsap.gcreport")
+                java
+            }
+
+            gcReport {
+                logs.set(listOf("$gcLog"))
+            }
+            """,
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks", "--stacktrace")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+    }
 }

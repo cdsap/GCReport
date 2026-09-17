@@ -8,8 +8,10 @@ import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
-import org.gradle.api.file.Directory
-import org.gradle.api.provider.Provider
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.logging.Logging
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.tooling.events.FinishEvent
@@ -18,12 +20,14 @@ import java.io.File
 
 abstract class GCReportService : BuildService<GCReportService.Params>, AutoCloseable, OperationCompletionListener {
     interface Params : BuildServiceParameters {
-        var logs: Provider<List<String>>
-        var histogramEnabled: Provider<Boolean>
-        var histogramBucket: Provider<Bucket>
-        var buildOutput: Provider<Directory>
-        var enabledReport: Provider<Boolean>
+        val logs: ListProperty<String>
+        val histogramEnabled: Property<Boolean>
+        val histogramBucket: Property<Bucket>
+        val buildOutput: DirectoryProperty
+        val enabledReport: Property<Boolean>
     }
+
+    private val logger = Logging.getLogger(GCReportService::class.java)
 
     override fun onFinish(event: FinishEvent?) {}
 
@@ -41,7 +45,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                 val headers = "Collection type,Occurrences\n"
                 var content = ""
                 val metrics = GCReportMetrics.from(gcEntries)
-                println(
+                logger.lifecycle(
                     table {
                         cellStyle {
                             alignment = TextAlignment.MiddleLeft
@@ -74,7 +78,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                     val headersHistogram = "Bucket,Occurrences\n"
                     var contentHistogram = ""
 
-                    println(
+                    logger.lifecycle(
                         table {
                             cellStyle {
                                 alignment = TextAlignment.MiddleLeft
@@ -104,7 +108,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                                     }
                                 }
                             }
-                        },
+                        }.toString(),
                     )
                     fileHistogram.writeText(headersHistogram + contentHistogram)
                 }
