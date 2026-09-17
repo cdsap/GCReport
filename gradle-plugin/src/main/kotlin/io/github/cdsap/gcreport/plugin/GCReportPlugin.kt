@@ -1,22 +1,39 @@
 package io.github.cdsap.gcreport.plugin
 
-import com.gradle.develocity.agent.gradle.DevelocityConfiguration
-import io.github.cdsap.gcreport.plugin.report.DevelocityReport
+import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.report.DevelocityPresence
+import io.github.cdsap.gcreport.plugin.report.DevelocitySupport
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.build.event.BuildEventsListenerRegistry
 import org.gradle.kotlin.dsl.create
+import javax.inject.Inject
 
-class GCReportPlugin : Plugin<Project> {
-    override fun apply(target: Project) {
-        val extension = target.extensions.create<GCReportExtension>("gcReport")
-        target.gradle.rootProject {
-            val develocityConfiguration = extensions.findByType(DevelocityConfiguration::class.java)
-            if (develocityConfiguration != null) {
-                ServiceHandler(target, extension, extension.enableConsoleLog).createService()
-                DevelocityReport(develocityConfiguration, extension).report()
-            } else {
-                ServiceHandler(target, extension).createService()
+abstract class GCReportPlugin
+    @Inject
+    constructor(
+        private val registry: BuildEventsListenerRegistry,
+    ) : Plugin<Project> {
+        override fun apply(target: Project) {
+            val extension =
+                target.extensions.create<GCReportExtension>("gcReport").apply {
+                    histogramEnabled.convention(false)
+                    histogramBucket.convention(Bucket.FreedmanDiaconis)
+                    enableConsoleLog.convention(false)
+                }
+            target.gradle.rootProject {
+                // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
+                val develocityExtension = DevelocityPresence.findExtension(this)
+                val serviceHandler =
+                    if (develocityExtension != null) {
+                        ServiceHandler(target, extension, extension.enableConsoleLog)
+                    } else {
+                        ServiceHandler(target, extension)
+                    }
+                registry.onTaskCompletion(serviceHandler.createService())
+                if (develocityExtension != null) {
+                    DevelocitySupport.register(develocityExtension, extension)
+                }
             }
         }
     }
-}
