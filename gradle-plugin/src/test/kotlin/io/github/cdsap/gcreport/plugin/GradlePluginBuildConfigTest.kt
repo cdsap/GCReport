@@ -8,6 +8,10 @@ import java.io.DataInputStream
 import java.io.File
 
 class GradlePluginBuildConfigTest {
+    private val buildGradleContents: String by lazy {
+        File("build.gradle.kts").canonicalFile.readText()
+    }
+
     @Test
     fun `settings centralizes dependency repositories and rejects project repositories`() {
         val settingsGradle = File("../settings.gradle.kts").canonicalFile
@@ -33,9 +37,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `gradle plugin build declares junit platform launcher on test runtime classpath`() {
-        val buildGradle = File("build.gradle.kts").canonicalFile
-        val buildGradleContents = buildGradle.readText()
-
         assertTrue(
             buildGradleContents.contains("testRuntimeOnly(libs.junit.platform.launcher)"),
             "build.gradle.kts must declare junit-platform-launcher on the test runtime classpath",
@@ -44,9 +45,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `gradle plugin build pins JavaCompile encoding to UTF-8`() {
-        val buildGradle = File("build.gradle.kts").canonicalFile
-        val buildGradleContents = buildGradle.readText()
-
         assertTrue(
             buildGradleContents.contains("tasks.withType<JavaCompile>().configureEach"),
             "build.gradle.kts must configure JavaCompile tasks",
@@ -70,9 +68,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `validatePlugins enables stricter validation`() {
-        val buildGradle = File("build.gradle.kts").canonicalFile
-        val buildGradleContents = buildGradle.readText()
-
         assertTrue(
             buildGradleContents.contains("tasks.validatePlugins"),
             "build.gradle.kts must configure the validatePlugins task",
@@ -85,8 +80,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `gradle plugin Maven publication uses descriptive artifactId`() {
-        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
-
         assertTrue(
             buildGradleContents.contains("""create<MavenPublication>("pluginMaven")"""),
             "build.gradle.kts must configure the pluginMaven publication",
@@ -99,8 +92,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `gradle plugin build pins jvm toolchain to java 11`() {
-        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
-
         assertTrue(
             buildGradleContents.contains("jvmToolchain(11)"),
             "build.gradle.kts must pin kotlin jvmToolchain(11) so published bytecode is stable",
@@ -129,8 +120,6 @@ class GradlePluginBuildConfigTest {
 
     @Test
     fun `develocity is compileOnly so it is not published as a runtime dependency`() {
-        val buildGradleContents = File("build.gradle.kts").canonicalFile.readText()
-
         assertTrue(
             buildGradleContents.contains("compileOnly(libs.develocity)"),
             "build.gradle.kts must declare develocity as compileOnly",
@@ -146,6 +135,42 @@ class GradlePluginBuildConfigTest {
         assertTrue(
             buildGradleContents.contains("pluginUnderTestMetadata"),
             "build.gradle.kts must keep Develocity on the TestKit plugin classpath via pluginUnderTestMetadata",
+        )
+    }
+
+    @Test
+    fun `gradle plugin build keeps kotlin jvm and drops kotlin-dsl`() {
+        assertTrue(
+            buildGradleContents.contains("alias(libs.plugins.kotlin.jvm)"),
+            "build.gradle.kts must apply the kotlin jvm plugin explicitly",
+        )
+        assertFalse(
+            Regex("""\bkotlin-dsl\b""").containsMatchIn(buildGradleContents),
+            "build.gradle.kts must not apply kotlin-dsl (no precompiled script plugins)",
+        )
+    }
+
+    @Test
+    fun `gradle plugin build drops plugins applied by plugin-publish`() {
+        assertTrue(
+            buildGradleContents.contains("alias(libs.plugins.gradle.publish)"),
+            "build.gradle.kts must apply com.gradle.plugin-publish",
+        )
+        assertFalse(
+            Regex("""\bjava-gradle-plugin\b""").containsMatchIn(buildGradleContents),
+            "build.gradle.kts must not declare java-gradle-plugin (applied by plugin-publish)",
+        )
+        assertFalse(
+            Regex("""\bmaven-publish\b""").containsMatchIn(buildGradleContents),
+            "build.gradle.kts must not declare maven-publish (applied by plugin-publish)",
+        )
+    }
+
+    @Test
+    fun `gradle plugin build declares gradleApi explicitly`() {
+        assertTrue(
+            buildGradleContents.contains("implementation(gradleApi())"),
+            "build.gradle.kts must declare gradleApi() once kotlin-dsl is removed",
         )
     }
 

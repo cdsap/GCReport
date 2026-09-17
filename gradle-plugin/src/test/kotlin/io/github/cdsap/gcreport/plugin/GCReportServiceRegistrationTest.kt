@@ -196,7 +196,7 @@ class GCReportServiceRegistrationTest {
             File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPlugin.kt").readText()
 
         assertTrue(
-            plugin.contains("target.extensions.create<GCReportExtension>(\"gcReport\")"),
+            plugin.contains("target.extensions.create(\"gcReport\", GCReportExtension::class.java)"),
         )
         assertFalse(plugin.contains("getByName(\"gcReport\")"))
         assertFalse(plugin.contains("as GCReportExtension"))
@@ -217,12 +217,12 @@ class GCReportServiceRegistrationTest {
 
         val rootProjectBlock = applyBody.substring(rootProjectBlockStart)
         assertTrue(
-            rootProjectBlock.contains("DevelocityPresence.findExtension(this)"),
-            "Develocity lookup should use the rootProject receiver",
+            rootProjectBlock.contains("DevelocityPresence.findExtension(rootProject)"),
+            "Develocity lookup should use the rootProject Action parameter",
         )
         assertFalse(
             rootProjectBlock.contains("DevelocityPresence.findExtension(target.gradle.rootProject)"),
-            "unused rootProject receiver: lookup should not re-qualify through target.gradle.rootProject",
+            "unused rootProject block: lookup should not re-qualify through target.gradle.rootProject",
         )
     }
 }

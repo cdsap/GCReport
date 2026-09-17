@@ -1,8 +1,5 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
-    `kotlin-dsl`
-    `java-gradle-plugin`
-    `maven-publish`
     alias(libs.plugins.gradle.publish)
     alias(libs.plugins.ktlint)
 }
@@ -24,6 +21,7 @@ kotlin {
 }
 
 dependencies {
+    implementation(gradleApi())
     compileOnly(libs.develocity)
     implementation(libs.picnic)
     testImplementation(libs.develocity)

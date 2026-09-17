@@ -6,7 +6,6 @@ import io.github.cdsap.gcreport.plugin.report.DevelocitySupport
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.build.event.BuildEventsListenerRegistry
-import org.gradle.kotlin.dsl.create
 import javax.inject.Inject
 
 abstract class GCReportPlugin
@@ -16,14 +15,14 @@ abstract class GCReportPlugin
     ) : Plugin<Project> {
         override fun apply(target: Project) {
             val extension =
-                target.extensions.create<GCReportExtension>("gcReport").apply {
+                target.extensions.create("gcReport", GCReportExtension::class.java).apply {
                     histogramEnabled.convention(false)
                     histogramBucket.convention(Bucket.FreedmanDiaconis)
                     enableConsoleLog.convention(false)
                 }
-            target.gradle.rootProject {
+            target.gradle.rootProject { rootProject ->
                 // Resolve Develocity without hard-referencing its types (compileOnly; may be absent).
-                val develocityExtension = DevelocityPresence.findExtension(this)
+                val develocityExtension = DevelocityPresence.findExtension(rootProject)
                 val serviceHandler =
                     if (develocityExtension != null) {
                         ServiceHandler(target, extension, extension.enableConsoleLog)

@@ -14,15 +14,15 @@ class ServiceHandler(
             project.gradle.sharedServices.registerIfAbsent(
                 "gcReportService",
                 GCReportService::class.java,
-            ) {
-                parameters.logs.set(extension.logs)
-                parameters.histogramEnabled.set(extension.histogramEnabled)
-                parameters.histogramBucket.set(extension.histogramBucket)
-                parameters.buildOutput.set(project.layout.buildDirectory.dir("reports/gcreport"))
+            ) { serviceSpec ->
+                serviceSpec.parameters.logs.set(extension.logs)
+                serviceSpec.parameters.histogramEnabled.set(extension.histogramEnabled)
+                serviceSpec.parameters.histogramBucket.set(extension.histogramBucket)
+                serviceSpec.parameters.buildOutput.set(project.layout.buildDirectory.dir("reports/gcreport"))
                 if (enableLog == null) {
-                    parameters.enabledReport.convention(true)
+                    serviceSpec.parameters.enabledReport.convention(true)
                 } else {
-                    parameters.enabledReport.set(enableLog)
+                    serviceSpec.parameters.enabledReport.set(enableLog)
                 }
             }
         return service

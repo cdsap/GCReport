@@ -15,13 +15,13 @@ class DevelocityValues(
 ) {
     fun report() {
         val metrics = GCReportMetrics.from(gcEntries)
-        develocityConfiguration.buildScan {
+        develocityConfiguration.buildScan { buildScan ->
             metrics.collectionTypeCounts().forEach { (description, count) ->
-                value("gc-${log.getFileName()}-$description", "$count")
+                buildScan.value("gc-${log.getFileName()}-$description", "$count")
             }
             val counter = metrics.totalCollections()
             if (counter != 0) {
-                value("gc-${log.getFileName()}-total-collections", "$counter")
+                buildScan.value("gc-${log.getFileName()}-total-collections", "$counter")
             }
             if (extension.histogramEnabled.get()) {
                 val histogram =
@@ -33,7 +33,7 @@ class DevelocityValues(
                     histogramText += "\"${it.first}\": \"${it.second}\", "
                 }
                 if (histogramText.isNotEmpty()) {
-                    value("gc-${log.getFileName()}-histogram", "${histogramText.dropLast(1)}]")
+                    buildScan.value("gc-${log.getFileName()}-histogram", "${histogramText.dropLast(1)}]")
                 }
             }
         }
