@@ -91,10 +91,10 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
-    fun `gradle plugin build pins jvm toolchain to java 11`() {
+    fun `gradle plugin build pins jvm toolchain to java 17`() {
         assertTrue(
-            buildGradleContents.contains("jvmToolchain(11)"),
-            "build.gradle.kts must pin kotlin jvmToolchain(11) so published bytecode is stable",
+            buildGradleContents.contains("jvmToolchain(17)"),
+            "build.gradle.kts must pin kotlin jvmToolchain(17) so published bytecode is stable",
         )
     }
 
@@ -175,16 +175,16 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
-    fun `compiled plugin classes target java 11 bytecode`() {
+    fun `compiled plugin classes target java 17 bytecode`() {
         val classFile =
             File("build/classes/kotlin/main/io/github/cdsap/gcreport/plugin/GCReportPlugin.class")
                 .canonicalFile
 
         assertTrue(classFile.isFile, "Expected compiled class at ${classFile.path}")
         assertEquals(
-            JAVA_11_MAJOR_VERSION,
+            JAVA_17_MAJOR_VERSION,
             classFileMajorVersion(classFile),
-            "Published plugin bytecode must target Java 11 (major version $JAVA_11_MAJOR_VERSION)",
+            "Published plugin bytecode must target Java 17 (major version $JAVA_17_MAJOR_VERSION)",
         )
     }
 
@@ -198,7 +198,7 @@ class GradlePluginBuildConfigTest {
 
     private companion object {
         const val CLASS_FILE_MAGIC = -0x35014542 // 0xCAFEBABE
-        const val JAVA_11_MAJOR_VERSION = 55
+        const val JAVA_17_MAJOR_VERSION = 61
     }
 
     @Test
