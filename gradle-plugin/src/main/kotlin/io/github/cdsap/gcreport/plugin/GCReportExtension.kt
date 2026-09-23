@@ -6,6 +6,7 @@ import org.gradle.api.provider.Property
 
 abstract class GCReportExtension {
     abstract val logs: ListProperty<String>
+    abstract val gbosEnabled: Property<Boolean>
     abstract val histogramEnabled: Property<Boolean>
     abstract val histogramBucket: Property<Bucket>
     abstract val enableConsoleLog: Property<Boolean>

@@ -17,11 +17,12 @@ publishing {
 }
 
 kotlin {
-    jvmToolchain(11)
+    jvmToolchain(17)
 }
 
 dependencies {
     implementation(gradleApi())
+    implementation(libs.build.observability.core)
     compileOnly(libs.develocity)
     implementation(libs.picnic)
     testImplementation(libs.develocity)

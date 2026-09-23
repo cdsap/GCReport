@@ -19,6 +19,7 @@ internal object GCReportPluginSupport {
             histogramEnabled.convention(false)
             histogramBucket.convention(Bucket.FreedmanDiaconis)
             enableConsoleLog.convention(false)
+            gbosEnabled.convention(false)
         }
 
     fun configure(
