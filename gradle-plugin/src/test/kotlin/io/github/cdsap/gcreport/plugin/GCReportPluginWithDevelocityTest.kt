@@ -27,36 +27,22 @@ class GCReportPluginWithDevelocityTest {
     @Test
     fun `plugin takes Develocity path without requiring live server credentials`() {
         val gcFile = "gc.log"
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/$gcFile"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
 
         File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                buildScan {
-                    publishing.onlyIf { false }
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    buildScan {
+                        publishing.onlyIf { false }
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody = """logs.set(listOf("$gcLog"))""",
             ),
         )
-
-        File(testProjectDir, "build.gradle.kts").writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -83,43 +69,26 @@ class GCReportPluginWithDevelocityTest {
         val develocityAccessKey = System.getenv("GE_API_KEY")
 
         val gcFile = "gc.log"
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/$gcFile"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-        val settingsGradle = File(testProjectDir, "settings.gradle.kts")
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
 
-        settingsGradle.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                server.set("$develocityUrl")
-                accessKey.set("$develocityAccessKey")
-                buildScan {
-                      uploadInBackground = false
-                      tag("$randomValue")
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    server.set("$develocityUrl")
+                    accessKey.set("$develocityAccessKey")
+                    buildScan {
+                          uploadInBackground = false
+                          tag("$randomValue")
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody = """logs.set(listOf("$gcLog"))""",
             ),
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         GradleRunner.create()
             .withProjectDir(testProjectDir)
@@ -165,43 +134,26 @@ class GCReportPluginWithDevelocityTest {
         val develocityAccessKey = System.getenv("GE_API_KEY")
         val gcFile = "gc.log"
 
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/$gcFile"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog -XX:+UseParallelGC
-            """.trimIndent(),
-        )
-        val settingsGradle = File(testProjectDir, "settings.gradle.kts")
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog, " -XX:+UseParallelGC")
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
 
-        settingsGradle.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                server.set("$develocityUrl")
-                accessKey.set("$develocityAccessKey")
-                buildScan {
-                      uploadInBackground = false
-                      tag("$randomValue")
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    server.set("$develocityUrl")
+                    accessKey.set("$develocityAccessKey")
+                    buildScan {
+                          uploadInBackground = false
+                          tag("$randomValue")
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody = """logs.set(listOf("$gcLog"))""",
             ),
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         GradleRunner.create()
             .withProjectDir(testProjectDir)
@@ -246,46 +198,32 @@ class GCReportPluginWithDevelocityTest {
         val develocityUrl = System.getenv("GE_URL")
         val develocityAccessKey = System.getenv("GE_API_KEY")
         val gcFile = "gc.log"
-        val settingsGradle = File(testProjectDir, "settings.gradle.kts")
         val randomValue = Random.nextInt(Int.MAX_VALUE).toString()
+        val gcLog = "${testProjectDir.absolutePath}/$gcFile"
 
-        settingsGradle.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                server.set("$develocityUrl")
-                accessKey.set("$develocityAccessKey")
-                buildScan {
-                      uploadInBackground = false
-                      tag("$randomValue")
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    server.set("$develocityUrl")
+                    accessKey.set("$develocityAccessKey")
+                    buildScan {
+                          uploadInBackground = false
+                          tag("$randomValue")
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody =
+                    """
+                    logs.set(listOf("$gcLog"))
+                    histogramEnabled.set(true)
+                    histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
+                    """.trimIndent(),
             ),
         )
 
-        val gradleProperties = File(testProjectDir, "gradle.properties")
-        val gcLog = "${testProjectDir.absolutePath}/$gcFile"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-                histogramEnabled.set(true)
-                histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
-            }
-            """,
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         GradleRunner.create()
             .withProjectDir(testProjectDir)
@@ -321,40 +259,20 @@ class GCReportPluginWithDevelocityTest {
     @Test
     fun `plugin applies alongside Develocity with compileOnly classpath`() {
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        File(testProjectDir, "gradle.properties").writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
         File(testProjectDir, "settings.gradle.kts").writeText(
-            """
-            pluginManagement {
-                repositories {
-                    gradlePluginPortal()
-                    mavenCentral()
-                }
-            }
-            ${DevelocityTestSupport.settingsScript(
-                """
-                buildScan {
-                    publishing.onlyIf { false }
-                }
-                """.trimIndent(),
-            )}
-            """.trimIndent(),
+            DevelocityTestSupport.settingsScript(
+                configureBody =
+                    """
+                    buildScan {
+                        publishing.onlyIf { false }
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody = """logs.set(listOf("$gcLog"))""",
+            ),
         )
-        File(testProjectDir, "build.gradle.kts").writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
