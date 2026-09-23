@@ -7,7 +7,7 @@ Analyzing the types of garbage collections that occurred during the build can pr
 **This plugin is intended for performance investigations and is not meant to be enabled in regular builds.**
 ### Compatibility
 * **Gradle:** **8.9+**. The plugin obtains `BuildEventsListenerRegistry` via constructor injection (`@Inject`) and registers a build service that listens for task completion.
-* **Java:** **11+**. Published plugin bytecode is pinned with `jvmToolchain(11)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 11 or newer.
+* **Java:** **17+**. Published plugin bytecode is pinned with `jvmToolchain(17)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 17 or newer.
 * **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
 * **Application target:** Apply `io.github.cdsap.gcreport` from **`settings.gradle` / `settings.gradle.kts`**. Build-service registration and Develocity hooks run once per build, including multi-project builds. Consumers that still apply the plugin from a project build script can use the compatibility id `io.github.cdsap.gcreport.project` (see [Project plugin compatibility](#project-plugin-compatibility)).
 
@@ -23,6 +23,7 @@ plugins {
 
 gcReport {
     logs.set(listOf("gradle_gc.log"))
+    gbosEnabled.set(true)
 }
 ```
 
@@ -47,9 +48,15 @@ org.gradle.jvmargs=-Xlog:gc*:file=/project/gradle_gc.log
 ```kotlin
 gcReport {
     logs.set(listOf("gradle_gc.log"))
+    gbosEnabled.set(true)
 }
 
 ```
+
+`gbosEnabled` defaults to `false`. When enabled with Develocity, GCReport also
+emits GBOS `jvm.gc` observations using the shared `build-observability-core`
+model. Existing GC custom values, console output, CSV files, and histogram
+output remain unchanged.
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.

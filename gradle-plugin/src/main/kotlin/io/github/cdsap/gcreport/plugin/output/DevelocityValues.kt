@@ -1,6 +1,7 @@
 package io.github.cdsap.gcreport.plugin.output
 
 import com.gradle.develocity.agent.gradle.DevelocityConfiguration
+import io.github.cdsap.gbos.core.GbosJson
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
@@ -13,6 +14,7 @@ class DevelocityValues(
     private val log: String,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
+    private val gbosEnabled: Boolean,
 ) {
     fun report() {
         val metrics = GCReportMetrics.from(gcEntries)
@@ -35,6 +37,11 @@ class DevelocityValues(
                 }
                 if (histogramText.isNotEmpty()) {
                     buildScan.value("gc-${log.getFileName()}-histogram", "${histogramText.dropLast(1)}]")
+                }
+            }
+            if (gbosEnabled) {
+                GbosDevelocityProjection.observations(log, gcEntries).forEach { observation ->
+                    buildScan.value(GbosDevelocityProjection.OBSERVATION_CUSTOM_VALUE, GbosJson.encode(observation))
                 }
             }
         }

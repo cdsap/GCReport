@@ -1,6 +1,7 @@
 [versions]
-kotlin = "2.1.0"
+kotlin = "2.4.20"
 develocity = "3.19.1"
+buildObservabilityCore = "0.0.6"
 junit = "5.10.0"
 picnic = "0.7.0"
 ktor-client-cio = "3.0.3"
@@ -11,6 +12,7 @@ gson = "2.10.1"
 
 [libraries]
 develocity = { group = "com.gradle", name = "develocity-gradle-plugin", version.ref = "develocity"}
+build-observability-core = { group = "io.github.cdsap", name = "build-observability-core", version.ref = "buildObservabilityCore" }
 junit = { group = "org.junit", name = "junit-bom", version.ref = "junit" }
 picnic = { group = "com.jakewharton.picnic", name = "picnic", version.ref = "picnic" }
 ktor-client-cio = { group = "io.ktor", name = "ktor-client-cio", version.ref = "ktor-client-cio" }
