@@ -13,28 +13,10 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report for G1`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(testProjectDir, gcLog)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -51,28 +33,10 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report for Parallel`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog -XX:+UseParallelGC
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog, " -XX:+UseParallelGC")
+        GCReportTestFixtures.writeKotlinSettings(testProjectDir, gcLog)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -89,30 +53,18 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin generates Output with Gc report and Histogram`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            gcLog,
+            extraGcReportConfig =
+                """
                 histogramEnabled.set(true)
                 histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
-            }
-            """,
+                """.trimIndent(),
         )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -131,30 +83,18 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin report output is suppressed with quiet`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            gcLog,
+            extraGcReportConfig =
+                """
                 histogramEnabled.set(true)
                 histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
-            }
-            """,
+                """.trimIndent(),
         )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -173,29 +113,11 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin doesn't generate output if file is incorrect`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
         val gcLogIncorrect = "${testProjectDir.absolutePath}/gc2.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLogIncorrect"))
-            }
-            """,
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(testProjectDir, gcLogIncorrect)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -212,33 +134,39 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin supports kotlin and gradle gc logs`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gradle_gc.log"
         val gcKotlinLog = "${testProjectDir.absolutePath}/kotlin_gc.log"
-        gradleProperties.writeText(
+        File(testProjectDir, "gradle.properties").writeText(
             """
             org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
             kotlin.daemon.jvmargs=-Xlog:gc*:file=$gcKotlinLog
             """.trimIndent(),
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             """
-
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
             plugins {
                 id("io.github.cdsap.gcreport")
+            }
+            gcReport {
+                logs.set(listOf("$gcLog","$gcKotlinLog"))
+                histogramEnabled.set(true)
+            }
+            """.trimIndent(),
+        )
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
                 kotlin("jvm") version "2.1.0"
             }
 
             repositories {
                 mavenCentral()
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog","$gcKotlinLog"))
-                histogramEnabled.set(true)
             }
             """,
         )
@@ -279,26 +207,29 @@ class GCReportPluginWithoutDevelocityTest {
 
     @Test
     fun `plugin compatible with configuration cache`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        File(testProjectDir, "settings.gradle.kts").writeText(
             """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-
-        buildFile.writeText(
-            """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
             plugins {
                 id("io.github.cdsap.gcreport")
-                 id("io.github.cdsap.gradleprocess") version "0.1.2"
-                java
             }
-
             gcReport {
                 logs.set(listOf("$gcLog"))
+            }
+            """.trimIndent(),
+        )
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
+                 id("io.github.cdsap.gradleprocess") version "0.1.2"
+                java
             }
             """,
         )
@@ -316,5 +247,85 @@ class GCReportPluginWithoutDevelocityTest {
                 .withPluginClasspath()
                 .build()
         assertTrue(withConfigurationCache.output.contains("Reusing configuration cache."))
+    }
+
+    @Test
+    fun `groovy settings script configures GCReport`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeGroovySettings(testProjectDir, gcLog)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("GC Log: gc.log"))
+        assertTrue(result.output.contains("Collection type"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+    }
+
+    @Test
+    fun `multi-project build registers service once and writes root report`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        File(testProjectDir, "settings.gradle.kts").writeText(
+            """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
+            plugins {
+                id("io.github.cdsap.gcreport")
+            }
+            gcReport {
+                logs.set(listOf("$gcLog"))
+            }
+            include("app", "lib")
+            """.trimIndent(),
+        )
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
+                java
+            }
+            """.trimIndent(),
+        )
+        File(testProjectDir, "app").mkdirs()
+        File(testProjectDir, "app/build.gradle.kts").writeText(
+            """
+            plugins {
+                java
+            }
+            """.trimIndent(),
+        )
+        File(testProjectDir, "lib").mkdirs()
+        File(testProjectDir, "lib/build.gradle.kts").writeText(
+            """
+            plugins {
+                java
+            }
+            """.trimIndent(),
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("GC Log: gc.log"))
+        assertTrue(result.output.contains("Collection type"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+        assertFalse(testProjectDir.resolve("app/build/reports/gcreport/gc.csv").exists())
+        assertFalse(testProjectDir.resolve("lib/build/reports/gcreport/gc.csv").exists())
+        // Console report should appear once (not once per project).
+        assertTrue(result.output.split("GC Log: gc.log").size - 1 == 1)
     }
 }

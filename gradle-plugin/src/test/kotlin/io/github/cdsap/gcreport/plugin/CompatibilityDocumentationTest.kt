@@ -1,6 +1,5 @@
 package io.github.cdsap.gcreport.plugin
 
-import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -43,6 +42,14 @@ class CompatibilityDocumentationTest {
             readmeText.contains("G1") && readmeText.contains("Parallel"),
             "README must state supported GC collectors G1 and Parallel",
         )
+        assertTrue(
+            readmeText.contains("settings.gradle"),
+            "README must document settings.gradle application",
+        )
+        assertTrue(
+            readmeText.contains("io.github.cdsap.gcreport.project"),
+            "README must document the project compatibility plugin id",
+        )
     }
 
     @Test
@@ -59,11 +66,18 @@ class CompatibilityDocumentationTest {
             "README plugins snippet must use id io.github.cdsap.gcreport and version $version",
         )
 
-        val pluginIdMatch = PLUGIN_ID_REGEX.find(buildGradle)
-        assertEquals(
-            "io.github.cdsap.gcreport",
-            pluginIdMatch?.groupValues?.get(1),
+        val pluginIds =
+            PLUGIN_ID_REGEX
+                .findAll(buildGradle)
+                .map { it.groupValues[1] }
+                .toList()
+        assertTrue(
+            pluginIds.contains("io.github.cdsap.gcreport"),
             "Published plugin id must remain io.github.cdsap.gcreport",
+        )
+        assertTrue(
+            pluginIds.contains("io.github.cdsap.gcreport.project"),
+            "Published compatibility plugin id must be io.github.cdsap.gcreport.project",
         )
     }
 
@@ -81,6 +95,10 @@ class CompatibilityDocumentationTest {
         assertTrue(
             plugin.contains("@Inject"),
             "GCReportPlugin must obtain BuildEventsListenerRegistry via @Inject",
+        )
+        assertTrue(
+            plugin.contains("Plugin<Settings>"),
+            "GCReportPlugin must be a settings plugin",
         )
         assertFalse(
             plugin.contains("org.gradle.internal.extensions.core.serviceOf"),

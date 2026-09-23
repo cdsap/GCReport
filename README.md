@@ -1,6 +1,6 @@
 ## GC Report Plugin
-Gradle plugin that collects GC metrics based on the GC logs generated during the build.
-If [Develocity](https://gradle.com/develocity/) is configured in the project, the plugin publishes GC metrics as custom values. Otherwise, it generates a console report and a CSV file.
+Gradle settings plugin that collects GC metrics based on the GC logs generated during the build.
+If [Develocity](https://gradle.com/develocity/) is configured in the build, the plugin publishes GC metrics as custom values. Otherwise, it generates a console report and a CSV file.
 
 Analyzing the types of garbage collections that occurred during the build can provide valuable insights into performance issues.
 
@@ -9,16 +9,34 @@ Analyzing the types of garbage collections that occurred during the build can pr
 * **Gradle:** **8.9+**. The plugin obtains `BuildEventsListenerRegistry` via constructor injection (`@Inject`) and registers a build service that listens for task completion.
 * **Java:** **11+**. Published plugin bytecode is pinned with `jvmToolchain(11)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 11 or newer.
 * **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
+* **Application target:** Apply `io.github.cdsap.gcreport` from **`settings.gradle` / `settings.gradle.kts`**. Build-service registration and Develocity hooks run once per build, including multi-project builds. Consumers that still apply the plugin from a project build script can use the compatibility id `io.github.cdsap.gcreport.project` (see [Project plugin compatibility](#project-plugin-compatibility)).
 
 ### Usage
-#### Apply the plugin
+#### Apply the plugin (settings)
 Plugin id / marker: `io.github.cdsap.gcreport` (current version `0.1.0`).
 
+Kotlin (`settings.gradle.kts`):
 ```kotlin
 plugins {
   id("io.github.cdsap.gcreport") version "0.1.0"
 }
+
+gcReport {
+    logs.set(listOf("gradle_gc.log"))
+}
 ```
+
+Groovy (`settings.gradle`):
+```groovy
+plugins {
+  id 'io.github.cdsap.gcreport' version '0.1.0'
+}
+
+gcReport {
+    logs = ['gradle_gc.log']
+}
+```
+
 #### Configure JVM properties with the daemon log
 ```properties
 org.gradle.jvmargs=-Xlog:gc*:file=/project/gradle_gc.log
@@ -28,7 +46,7 @@ org.gradle.jvmargs=-Xlog:gc*:file=/project/gradle_gc.log
 
 ```kotlin
 gcReport {
-    logs = listOf("gradle_gc.log")
+    logs.set(listOf("gradle_gc.log"))
 }
 
 ```
@@ -44,7 +62,7 @@ kotlin.daemon.jvmargs=-Xlog:gc*:file=/project/kotlin_gc.log
 Then, update the plugin configuration to process both logs:
 ```kotlin
 gcReport {
-    logs = listOf("gradle_gc.log","kotlin_gc.log")
+    logs.set(listOf("gradle_gc.log","kotlin_gc.log"))
 }
 ```
 This ensures that GC metrics from both the Gradle build process and the Kotlin daemon are captured and analyzed.
@@ -105,8 +123,19 @@ Bucket,Occurrences
 4.92-End,1
 ```
 
+### Project plugin compatibility
+Prefer applying `io.github.cdsap.gcreport` from settings so configuration and build-service registration happen once for the whole build.
+
+If you still apply GCReport from a project `build.gradle(.kts)`, use the compatibility plugin id:
+
+```kotlin
+plugins {
+  id("io.github.cdsap.gcreport.project") version "0.1.0"
+}
+```
+
+Do not apply both the settings plugin and the project compatibility plugin in the same build; registration is guarded to run once, but only one extension host should own configuration.
+
 ### Considerations
 * Supported GC collectors and log formats are listed under [Compatibility](#compatibility).
 * The plugin output may be unreliable for incremental builds where log rotations have occurred.
-
-

@@ -64,7 +64,16 @@ gradlePlugin {
             id = "io.github.cdsap.gcreport"
             implementationClass = "io.github.cdsap.gcreport.plugin.GCReportPlugin"
             displayName = "GC Report"
-            description = "Gradle plugin that collects GC metrics based on the GC logs generated during the build"
+            description =
+                "Gradle settings plugin that collects GC metrics based on the GC logs generated during the build"
+            tags = listOf("kotlin", "gc", "performance")
+        }
+        create("GCReportProject") {
+            id = "io.github.cdsap.gcreport.project"
+            implementationClass = "io.github.cdsap.gcreport.plugin.GCReportProjectPlugin"
+            displayName = "GC Report (project compatibility)"
+            description =
+                "Compatibility project plugin for GC Report; prefer applying io.github.cdsap.gcreport from settings"
             tags = listOf("kotlin", "gc", "performance")
         }
     }

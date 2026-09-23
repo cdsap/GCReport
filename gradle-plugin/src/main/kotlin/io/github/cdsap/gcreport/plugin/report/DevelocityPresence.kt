@@ -1,21 +1,21 @@
 package io.github.cdsap.gcreport.plugin.report
 
-import org.gradle.api.Project
+import org.gradle.api.plugins.ExtensionAware
 
 /** Finds a Develocity extension without referencing Develocity API types. */
 internal object DevelocityPresence {
     private const val CONFIGURATION_CLASS =
         "com.gradle.develocity.agent.gradle.DevelocityConfiguration"
 
-    fun findExtension(project: Project): Any? {
+    fun findExtension(host: ExtensionAware): Any? {
         val bySchema =
-            project.extensions.extensionsSchema.elements
+            host.extensions.extensionsSchema.elements
                 .firstOrNull { it.publicType.concreteClass.name == CONFIGURATION_CLASS }
-                ?.let { project.extensions.findByName(it.name) }
+                ?.let { host.extensions.findByName(it.name) }
         if (bySchema != null) {
             return bySchema
         }
-        return project.extensions.findByName("develocity")
-            ?: project.extensions.findByName("gradleEnterprise")
+        return host.extensions.findByName("develocity")
+            ?: host.extensions.findByName("gradleEnterprise")
     }
 }

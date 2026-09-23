@@ -47,28 +47,14 @@ class GCReportServiceRegistrationTest {
 
     @Test
     fun `without Develocity console report remains enabled by default registration path`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            gcLog,
+            extraGcReportConfig = """enableConsoleLog.set(false)""",
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-                enableConsoleLog.set(false)
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -84,39 +70,26 @@ class GCReportServiceRegistrationTest {
 
     @Test
     fun `with Develocity enableConsoleLog true enables console report output`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
 
-        val settingsGradle = File(testProjectDir, "settings.gradle.kts")
-        settingsGradle.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                buildScan {
-                    publishing.onlyIf { false }
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    buildScan {
+                        publishing.onlyIf { false }
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody =
+                    """
+                    logs.set(listOf("$gcLog"))
+                    enableConsoleLog.set(true)
+                    """.trimIndent(),
             ),
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-                enableConsoleLog.set(true)
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -132,39 +105,26 @@ class GCReportServiceRegistrationTest {
 
     @Test
     fun `with Develocity enableConsoleLog false disables console report output`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
 
-        val settingsGradle = File(testProjectDir, "settings.gradle.kts")
-        settingsGradle.writeText(
+        File(testProjectDir, "settings.gradle.kts").writeText(
             DevelocityTestSupport.settingsScript(
-                """
-                buildScan {
-                    publishing.onlyIf { false }
-                }
-                """.trimIndent(),
+                configureBody =
+                    """
+                    buildScan {
+                        publishing.onlyIf { false }
+                    }
+                    """.trimIndent(),
+                includeGcReport = true,
+                gcReportBody =
+                    """
+                    logs.set(listOf("$gcLog"))
+                    enableConsoleLog.set(false)
+                    """.trimIndent(),
             ),
         )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
-                enableConsoleLog.set(false)
-            }
-            """,
-        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -180,29 +140,18 @@ class GCReportServiceRegistrationTest {
 
     @Test
     fun `managed extension conventions remain overridable by consumers`() {
-        val gradleProperties = File(testProjectDir, "gradle.properties")
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
-        gradleProperties.writeText(
-            """
-            org.gradle.jvmargs=-Xlog:gc*:file=$gcLog
-            """.trimIndent(),
-        )
-
-        val buildFile = File(testProjectDir, "build.gradle.kts")
-        buildFile.writeText(
-            """
-            plugins {
-                id("io.github.cdsap.gcreport")
-                java
-            }
-
-            gcReport {
-                logs.set(listOf("$gcLog"))
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            gcLog,
+            extraGcReportConfig =
+                """
                 histogramEnabled.set(true)
                 histogramBucket.set(io.github.cdsap.gcreport.plugin.model.Bucket.SquareRoot)
-            }
-            """,
+                """.trimIndent(),
         )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
         val result =
             GradleRunner.create()
@@ -219,39 +168,62 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
-    fun `apply reuses extension instance and looks up Develocity inside rootProject receiver`() {
+    fun `settings plugin creates extension and looks up Develocity inside rootProject receiver`() {
         val plugin =
             File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPlugin.kt").readText()
+        val support =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPluginSupport.kt").readText()
 
-        assertTrue(
-            plugin.contains("target.extensions.create(\"gcReport\", GCReportExtension::class.java)"),
-        )
+        assertTrue(plugin.contains("Plugin<Settings>"))
+        assertTrue(plugin.contains("GCReportPluginSupport.createExtension(target)"))
         assertFalse(plugin.contains("getByName(\"gcReport\")"))
         assertFalse(plugin.contains("as GCReportExtension"))
 
-        val applyBody =
-            plugin
-                .substringAfter("override fun apply(target: Project) {")
-                .substringBeforeLast("}")
-                .trim()
-        val rootProjectBlockStart = applyBody.indexOf("target.gradle.rootProject {")
-        assertTrue(rootProjectBlockStart >= 0, "expected rootProject receiver block")
-
-        val beforeRootProject = applyBody.substring(0, rootProjectBlockStart)
-        assertFalse(
-            beforeRootProject.contains("DevelocityPresence.findExtension"),
-            "Develocity lookup must not run eagerly before the rootProject block",
-        )
-
-        val rootProjectBlock = applyBody.substring(rootProjectBlockStart)
+        assertTrue(support.contains("gradle.rootProject {"))
+        assertTrue(support.contains("findDevelocity(rootProject)"))
         assertTrue(
-            rootProjectBlock.contains("DevelocityPresence.findExtension(rootProject)"),
-            "Develocity lookup should use the rootProject Action parameter",
+            support.contains("sharedServices.registrations.findByName(SERVICE_NAME)"),
+            "Service registration must be guarded once per build",
         )
-        assertFalse(
-            rootProjectBlock.contains("DevelocityPresence.findExtension(target.gradle.rootProject)"),
-            "unused rootProject block: lookup should not re-qualify through target.gradle.rootProject",
+    }
+
+    @Test
+    fun `project compatibility plugin still registers console report`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        File(testProjectDir, "settings.gradle.kts").writeText(
+            """
+            pluginManagement {
+                repositories {
+                    gradlePluginPortal()
+                    mavenCentral()
+                }
+            }
+            """.trimIndent(),
         )
+        File(testProjectDir, "build.gradle.kts").writeText(
+            """
+            plugins {
+                id("io.github.cdsap.gcreport.project")
+                java
+            }
+
+            gcReport {
+                logs.set(listOf("$gcLog"))
+            }
+            """,
+        )
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("GC Log: gc.log"))
+        assertTrue(result.output.contains("Collection type"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
     }
 
     private fun kotlinSources(): List<File> = File("src/main/kotlin").walkTopDown().filter { it.isFile && it.extension == "kt" }.toList()
