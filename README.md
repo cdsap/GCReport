@@ -10,6 +10,7 @@ Analyzing the types of garbage collections that occurred during the build can pr
 * **Java:** **17+**. Published plugin bytecode is pinned with `jvmToolchain(17)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 17 or newer.
 * **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
 * **Application target:** Apply `io.github.cdsap.gcreport` from **`settings.gradle` / `settings.gradle.kts`**. Build-service registration and Develocity hooks run once per build, including multi-project builds. Consumers that still apply the plugin from a project build script can use the compatibility id `io.github.cdsap.gcreport.project` (see [Project plugin compatibility](#project-plugin-compatibility)).
+* **Configuration cache / Isolated Projects:** Both plugin ids declare Configuration Cache support. The settings plugin `io.github.cdsap.gcreport` also declares [Isolated Projects](https://docs.gradle.org/current/userguide/isolated_projects.html) support. The project compatibility plugin `io.github.cdsap.gcreport.project` declares Isolated Projects as unsupported (see [Project plugin compatibility](#project-plugin-compatibility)).
 
 ### Usage
 #### Apply the plugin (settings)
@@ -142,6 +143,8 @@ plugins {
 ```
 
 Do not apply both the settings plugin and the project compatibility plugin in the same build; registration is guarded to run once, but only one extension host should own configuration.
+
+The project compatibility plugin is not compatible with Isolated Projects. When it is applied to a subproject, it reads the root project's `layout` (report directory) and `extensions` (Develocity lookup), and Isolated Projects rejects that cross-project access. Use the settings plugin with `org.gradle.unsafe.isolated-projects=true`.
 
 ### Considerations
 * Supported GC collectors and log formats are listed under [Compatibility](#compatibility).

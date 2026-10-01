@@ -1,3 +1,5 @@
+import org.gradle.plugin.compatibility.compatibility
+
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.gradle.publish)
@@ -68,6 +70,12 @@ gradlePlugin {
             description =
                 "Gradle settings plugin that collects GC metrics based on the GC logs generated during the build"
             tags = listOf("kotlin", "gc", "performance")
+            compatibility {
+                features {
+                    configurationCache = true
+                    isolatedProjects = true
+                }
+            }
         }
         create("GCReportProject") {
             id = "io.github.cdsap.gcreport.project"
@@ -76,6 +84,14 @@ gradlePlugin {
             description =
                 "Compatibility project plugin for GC Report; prefer applying io.github.cdsap.gcreport from settings"
             tags = listOf("kotlin", "gc", "performance")
+            compatibility {
+                features {
+                    configurationCache = true
+                    // Applied to a subproject, the plugin reads the root project's layout and extensions,
+                    // which Isolated Projects rejects. See IsolatedProjectsCompatibilityTest.
+                    isolatedProjects = false
+                }
+            }
         }
     }
 }
