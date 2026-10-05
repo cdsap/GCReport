@@ -79,14 +79,10 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
-    fun `gradle plugin Maven publication uses descriptive artifactId`() {
-        assertTrue(
-            buildGradleContents.contains("""create<MavenPublication>("pluginMaven")"""),
-            "build.gradle.kts must configure the pluginMaven publication",
-        )
-        assertTrue(
-            buildGradleContents.contains("""artifactId = "gcreport-gradle-plugin""""),
-            "pluginMaven publication must use descriptive artifactId gcreport-gradle-plugin",
+    fun `gradle plugin Maven publication keeps the released artifactId`() {
+        assertFalse(
+            Regex("""\bartifactId\s*=""").containsMatchIn(buildGradleContents),
+            "build.gradle.kts must not override artifactId; released coordinate is io.github.cdsap:gradle-plugin",
         )
     }
 
@@ -99,23 +95,19 @@ class GradlePluginBuildConfigTest {
     }
 
     @Test
-    fun `generated pluginMaven POM has descriptive artifactId`() {
+    fun `generated pluginMaven POM keeps the released coordinate`() {
         val pomFile = File("build/publications/pluginMaven/pom-default.xml").canonicalFile
         assertTrue(
             pomFile.isFile,
             "Expected generated POM at ${pomFile.path}; run generatePomFileForPluginMavenPublication first",
         )
 
-        val primaryArtifactId =
-            Regex("""<artifactId>([^<]+)</artifactId>""")
-                .find(pomFile.readText())
-                ?.groupValues
-                ?.get(1)
+        val pom = pomFile.readText()
+        val primaryGroupId = Regex("""<groupId>([^<]+)</groupId>""").find(pom)?.groupValues?.get(1)
+        val primaryArtifactId = Regex("""<artifactId>([^<]+)</artifactId>""").find(pom)?.groupValues?.get(1)
 
-        assertTrue(
-            primaryArtifactId == "gcreport-gradle-plugin",
-            "Expected primary artifactId gcreport-gradle-plugin but was $primaryArtifactId",
-        )
+        assertEquals("io.github.cdsap", primaryGroupId, "Released groupId must be io.github.cdsap")
+        assertEquals("gradle-plugin", primaryArtifactId, "Released artifactId must be gradle-plugin")
     }
 
     @Test

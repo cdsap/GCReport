@@ -9,15 +9,6 @@ plugins {
 group = "io.github.cdsap"
 version = "0.1.0"
 
-// Project directory is gradle-plugin; override so Maven coordinates are descriptive.
-publishing {
-    publications {
-        create<MavenPublication>("pluginMaven") {
-            artifactId = "gcreport-gradle-plugin"
-        }
-    }
-}
-
 kotlin {
     jvmToolchain(17)
 }
@@ -68,7 +59,7 @@ gradlePlugin {
             implementationClass = "io.github.cdsap.gcreport.plugin.GCReportPlugin"
             displayName = "GC Report"
             description =
-                "Gradle settings plugin that collects GC metrics based on the GC logs generated during the build"
+                "Gradle plugin (settings or project) that collects GC metrics based on the GC logs generated during the build"
             tags = listOf("kotlin", "gc", "performance")
             compatibility {
                 features {
@@ -80,9 +71,9 @@ gradlePlugin {
         create("GCReportProject") {
             id = "io.github.cdsap.gcreport.project"
             implementationClass = "io.github.cdsap.gcreport.plugin.GCReportProjectPlugin"
-            displayName = "GC Report (project compatibility)"
+            displayName = "GC Report (project alias)"
             description =
-                "Compatibility project plugin for GC Report; prefer applying io.github.cdsap.gcreport from settings"
+                "Project-only alias of io.github.cdsap.gcreport; prefer applying io.github.cdsap.gcreport from settings"
             tags = listOf("kotlin", "gc", "performance")
             compatibility {
                 features {

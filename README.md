@@ -1,5 +1,5 @@
 ## GC Report Plugin
-Gradle settings plugin that collects GC metrics based on the GC logs generated during the build.
+Gradle plugin that collects GC metrics based on the GC logs generated during the build. Apply it from settings (preferred) or from a project build script.
 If [Develocity](https://gradle.com/develocity/) is configured in the build, the plugin publishes GC metrics as custom values. Otherwise, it generates a console report and a CSV file.
 
 Analyzing the types of garbage collections that occurred during the build can provide valuable insights into performance issues.
@@ -9,8 +9,8 @@ Analyzing the types of garbage collections that occurred during the build can pr
 * **Gradle:** **8.9+**. The plugin obtains `BuildEventsListenerRegistry` via constructor injection (`@Inject`) and registers a build service that listens for task completion.
 * **Java:** **17+**. Published plugin bytecode is pinned with `jvmToolchain(17)` in `gradle-plugin/build.gradle.kts`, so the class-file target does not depend on which JDK runs the release build. The Gradle daemon that loads the plugin must therefore run on Java 17 or newer.
 * **GC collectors / log formats:** Unified JVM logging (`-Xlog:gc*`, as in the examples below). Test fixtures cover **G1** and **Parallel**. Other collectors (for example ZGC) are not validated.
-* **Application target:** Apply `io.github.cdsap.gcreport` from **`settings.gradle` / `settings.gradle.kts`**. Build-service registration and Develocity hooks run once per build, including multi-project builds. Consumers that still apply the plugin from a project build script can use the compatibility id `io.github.cdsap.gcreport.project` (see [Project plugin compatibility](#project-plugin-compatibility)).
-* **Configuration cache / Isolated Projects:** Both plugin ids declare Configuration Cache support. The settings plugin `io.github.cdsap.gcreport` also declares [Isolated Projects](https://docs.gradle.org/current/userguide/isolated_projects.html) support. The project compatibility plugin `io.github.cdsap.gcreport.project` declares Isolated Projects as unsupported (see [Project plugin compatibility](#project-plugin-compatibility)).
+* **Application target:** `io.github.cdsap.gcreport` works in **`settings.gradle` / `settings.gradle.kts`** (preferred) and in project build scripts (`build.gradle` / `build.gradle.kts`). Build-service registration and Develocity hooks run once per build, including multi-project builds. See [Applying from a build script](#applying-from-a-build-script).
+* **Configuration cache / Isolated Projects:** Both plugin ids declare Configuration Cache support. `io.github.cdsap.gcreport` also declares [Isolated Projects](https://docs.gradle.org/current/userguide/isolated_projects.html) support when applied from settings; applied from a subproject build script it is not Isolated Projects compatible (see [Applying from a build script](#applying-from-a-build-script)). The project-only alias `io.github.cdsap.gcreport.project` declares Isolated Projects as unsupported.
 
 ### Usage
 #### Apply the plugin (settings)
@@ -131,20 +131,26 @@ Bucket,Occurrences
 4.92-End,1
 ```
 
-### Project plugin compatibility
+### Applying from a build script
 Prefer applying `io.github.cdsap.gcreport` from settings so configuration and build-service registration happen once for the whole build.
 
-If you still apply GCReport from a project `build.gradle(.kts)`, use the compatibility plugin id:
+Existing builds that apply the plugin from a project `build.gradle(.kts)` keep working with the same id:
 
 ```kotlin
 plugins {
-  id("io.github.cdsap.gcreport.project") version "0.1.0"
+  id("io.github.cdsap.gcreport") version "0.1.0"
+}
+
+gcReport {
+    logs.set(listOf("gradle_gc.log"))
 }
 ```
 
-Do not apply both the settings plugin and the project compatibility plugin in the same build; registration is guarded to run once, but only one extension host should own configuration.
+`io.github.cdsap.gcreport.project` is a project-only alias of the same plugin and is not needed for new builds.
 
-The project compatibility plugin is not compatible with Isolated Projects. When it is applied to a subproject, it reads the root project's `layout` (report directory) and `extensions` (Develocity lookup), and Isolated Projects rejects that cross-project access. Use the settings plugin with `org.gradle.unsafe.isolated-projects=true`.
+Configure GCReport in one place per build. Registration is guarded to run once: if the plugin is applied from settings and also from a build script, the settings `gcReport { }` block is used and the build-script block is ignored.
+
+Applying the plugin from a subproject build script is not compatible with Isolated Projects. The plugin reads the root project's `layout` (report directory) and `extensions` (Develocity lookup), and Isolated Projects rejects that cross-project access. Apply it from settings when using `org.gradle.unsafe.isolated-projects=true`.
 
 ### Considerations
 * Supported GC collectors and log formats are listed under [Compatibility](#compatibility).
