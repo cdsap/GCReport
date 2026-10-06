@@ -48,7 +48,7 @@ class CompatibilityDocumentationTest {
         )
         assertTrue(
             readmeText.contains("io.github.cdsap.gcreport.project"),
-            "README must document the project compatibility plugin id",
+            "README must document the project alias plugin id",
         )
     }
 
@@ -97,8 +97,8 @@ class CompatibilityDocumentationTest {
             "GCReportPlugin must obtain BuildEventsListenerRegistry via @Inject",
         )
         assertTrue(
-            plugin.contains("Plugin<Settings>"),
-            "GCReportPlugin must be a settings plugin",
+            plugin.contains("Plugin<Any>") && plugin.contains("is Settings ->") && plugin.contains("is Project ->"),
+            "GCReportPlugin must dispatch to both settings and project targets",
         )
         assertFalse(
             plugin.contains("org.gradle.internal.extensions.core.serviceOf"),

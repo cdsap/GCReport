@@ -174,11 +174,11 @@ class GCReportServiceRegistrationTest {
         val support =
             File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPluginSupport.kt").readText()
 
-        assertTrue(plugin.contains("Plugin<Settings>"))
-        assertTrue(plugin.contains("GCReportPluginSupport.createExtension(target)"))
+        assertTrue(plugin.contains("is Settings -> GCReportPluginSupport.applyToSettings(target, registry)"))
         assertFalse(plugin.contains("getByName(\"gcReport\")"))
         assertFalse(plugin.contains("as GCReportExtension"))
 
+        assertTrue(support.contains("createExtension(settings)"))
         assertTrue(support.contains("gradle.rootProject {"))
         assertTrue(support.contains("findDevelocity(rootProject)"))
         assertTrue(
