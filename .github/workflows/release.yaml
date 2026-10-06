@@ -1,0 +1,72 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    name: Publish Gradle plugins
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout release tag
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.release.tag_name }}
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: '17'
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+
+          release_version="${RELEASE_TAG#v}"
+          if [[ -z "$release_version" || "$release_version" == *-SNAPSHOT* ]]; then
+            echo "Release tag must identify a non-snapshot version: $RELEASE_TAG" >&2
+            exit 1
+          fi
+
+          plugin_version="$(./gradlew -q :gradle-plugin:properties | awk -F': ' '$1 == "version" { print $2; exit }')"
+          if [[ -z "$plugin_version" || "$plugin_version" == *-SNAPSHOT* ]]; then
+            echo "Plugin version must be a non-snapshot version: $plugin_version" >&2
+            exit 1
+          fi
+          if [[ "$release_version" != "$plugin_version" ]]; then
+            echo "Release tag $RELEASE_TAG does not match plugin version $plugin_version" >&2
+            exit 1
+          fi
+
+      - name: Validate plugins and tests
+        run: ./gradlew :gradle-plugin:validatePlugins :gradle-plugin:test
+
+      - name: Publish plugins to Gradle Plugin Portal
+        id: publish
+        env:
+          GRADLE_PUBLISH_KEY: ${{ secrets.GRADLE_PUBLISH_KEY }}
+          GRADLE_PUBLISH_SECRET: ${{ secrets.GRADLE_PUBLISH_SECRET }}
+        run: |
+          set -euo pipefail
+          : "${GRADLE_PUBLISH_KEY:?GRADLE_PUBLISH_KEY is required}"
+          : "${GRADLE_PUBLISH_SECRET:?GRADLE_PUBLISH_SECRET is required}"
+          ./gradlew :gradle-plugin:publishPlugins
+
+      - name: Report Plugin Portal publication result
+        if: always()
+        run: 'echo "Gradle Plugin Portal publication result: ${{ steps.publish.outcome }}"'
