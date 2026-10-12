@@ -46,6 +46,21 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
+    fun `service handler owns the single registration and defaults reports to enabled`() {
+        val serviceHandler =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/ServiceHandler.kt").readText()
+        val support =
+            File("src/main/kotlin/io/github/cdsap/gcreport/plugin/GCReportPluginSupport.kt").readText()
+
+        assertTrue(serviceHandler.contains("private val enabledReport: Provider<Boolean>? = null"))
+        assertTrue(serviceHandler.contains("serviceSpec.parameters.enabledReport.convention(true)"))
+        assertTrue(serviceHandler.contains("serviceSpec.parameters.enabledReport.convention(enabledReport)"))
+        assertTrue(serviceHandler.contains("registerIfAbsent"))
+        assertTrue(support.contains("ServiceHandler(gradle, buildOutput, extension, enabledReport)"))
+        assertFalse(support.contains("sharedServices.registerIfAbsent"))
+    }
+
+    @Test
     fun `without Develocity console report remains enabled by default registration path`() {
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
         GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)

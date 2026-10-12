@@ -60,12 +60,8 @@ internal object GCReportPluginSupport {
             }
             val develocityExtension = findDevelocity(rootProject)
             val buildOutput = rootProject.layout.buildDirectory.dir("reports/gcreport")
-            val serviceHandler =
-                if (develocityExtension != null) {
-                    ServiceHandler(gradle, buildOutput, extension, extension.enableConsoleLog)
-                } else {
-                    ServiceHandler(gradle, buildOutput, extension)
-                }
+            val enabledReport = develocityExtension?.let { extension.enableConsoleLog }
+            val serviceHandler = ServiceHandler(gradle, buildOutput, extension, enabledReport)
             registry.onTaskCompletion(serviceHandler.createService(SERVICE_NAME))
             if (develocityExtension != null) {
                 DevelocitySupport.register(develocityExtension, extension)
