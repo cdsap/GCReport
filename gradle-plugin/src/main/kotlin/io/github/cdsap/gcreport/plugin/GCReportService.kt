@@ -30,13 +30,20 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                     parameters.histogramEnabled.get(),
                     parameters.histogramBucket.get(),
                 )
-            parameters.logs.get().filter { File(it).exists() }.forEach {
-                val gcEntries = GCLogReader(File(it)).parse()
-                if (gcEntries.isEmpty()) {
-                    return
-                }
-                writer.write(File(it), gcEntries)
+            for (log in parameters.logs.get().filter { File(it).exists() }) {
+                processLog(File(log), writer)
             }
         }
+    }
+
+    private fun processLog(
+        logFile: File,
+        writer: GCReportWriter,
+    ) {
+        val gcEntries = GCLogReader(logFile).parse()
+        if (gcEntries.isEmpty()) {
+            return
+        }
+        writer.write(logFile, gcEntries)
     }
 }
