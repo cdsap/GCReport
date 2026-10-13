@@ -84,6 +84,31 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
+    fun `empty log does not prevent a later valid log from being reported`() {
+        val emptyLog = File(testProjectDir, "empty.log").apply { writeText("") }
+        val validLog = File(testProjectDir, "valid.log")
+        checkNotNull(javaClass.getResourceAsStream("/correct_g1_log")).use { input ->
+            validLog.outputStream().use { output -> input.copyTo(output) }
+        }
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            emptyLog.absolutePath,
+            extraGcReportConfig = "logs.set(listOf(\"${emptyLog.absolutePath}\", \"${validLog.absolutePath}\"))",
+        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("GC Log: valid.log"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/valid.csv").exists())
+    }
+
+    @Test
     fun `with Develocity enableConsoleLog true enables console report output`() {
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
         GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
