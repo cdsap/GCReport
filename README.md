@@ -24,7 +24,8 @@ plugins {
 
 gcReport {
     logs.set(listOf("gradle_gc.log"))
-    gbosEnabled.set(true)
+    gbosJsonEnabled.set(true)
+    gbosNdjsonEnabled.set(true)
 }
 ```
 
@@ -49,15 +50,28 @@ org.gradle.jvmargs=-Xlog:gc*:file=/project/gradle_gc.log
 ```kotlin
 gcReport {
     logs.set(listOf("gradle_gc.log"))
-    gbosEnabled.set(true)
+    gbosJsonEnabled.set(true)
+    // gbosNdjsonEnabled.set(true) // optional independent sink
 }
 
 ```
 
-`gbosEnabled` defaults to `false`. When enabled with Develocity, GCReport also
-emits GBOS `jvm.gc` observations using the shared `build-observability-core`
-model. Existing GC custom values, console output, CSV files, and histogram
-output remain unchanged.
+`gbosJsonEnabled` and `gbosNdjsonEnabled` default to `false`. They write the
+same canonical `jvm.gc` observations used by the Develocity projection to
+`build/reports/gcreport/gbos.json` and `build/reports/gcreport/gbos.ndjson`.
+The JSON sink is a GBOS report envelope; NDJSON contains one complete
+observation per line. Files are replaced atomically after successful
+generation, and are removed when their sink is disabled or no observations are
+available.
+
+Develocity is detected automatically. When it is present, enabling either
+local sink also publishes those observations there, while existing GC custom
+values are retained. Existing console output, CSV files, histogram output, and
+log processing remain unchanged.
+
+For migration, the deprecated `gbosEnabled.set(true)` option remains supported
+and enables both local sinks and the Develocity projection. New builds should
+configure the format-specific options instead.
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.

@@ -12,6 +12,39 @@ class GCReportPluginWithoutDevelocityTest {
     lateinit var testProjectDir: File
 
     @Test
+    fun `plugin writes opt-in GBOS JSON and NDJSON without Develocity`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        GCReportTestFixtures.writeKotlinSettings(
+            testProjectDir,
+            gcLog,
+            extraGcReportConfig =
+                """
+                gbosJsonEnabled.set(true)
+                gbosNdjsonEnabled.set(true)
+                """.trimIndent(),
+        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+        val json = testProjectDir.resolve("build/reports/gcreport/gbos.json")
+        val ndjson = testProjectDir.resolve("build/reports/gcreport/gbos.ndjson")
+        assertTrue(json.isFile)
+        assertTrue(ndjson.isFile)
+        assertTrue(json.readText().contains("\"observations\""))
+        assertTrue(ndjson.readLines().isNotEmpty())
+        assertTrue(ndjson.readLines().all { !it.contains('\n') })
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").isFile)
+    }
+
+    @Test
     fun `plugin generates Output with Gc report for G1`() {
         val gcLog = "${testProjectDir.absolutePath}/gc.log"
         GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
