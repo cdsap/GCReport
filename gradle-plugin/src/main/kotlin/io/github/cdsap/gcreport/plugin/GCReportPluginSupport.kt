@@ -48,6 +48,8 @@ internal object GCReportPluginSupport {
                 gbosEnabled.convention(false)
                 gbosJsonEnabled.convention(gbosEnabled)
                 gbosNdjsonEnabled.convention(gbosEnabled)
+                gbosDevelocityEnabled.convention(gbosEnabled)
+                legacyDevelocityValuesEnabled.convention(true)
             }
 
     fun configure(

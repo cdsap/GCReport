@@ -12,6 +12,8 @@ abstract class GCReportExtension {
     abstract val gbosEnabled: Property<Boolean>
     abstract val gbosJsonEnabled: Property<Boolean>
     abstract val gbosNdjsonEnabled: Property<Boolean>
+    abstract val gbosDevelocityEnabled: Property<Boolean>
+    abstract val legacyDevelocityValuesEnabled: Property<Boolean>
     abstract val histogramEnabled: Property<Boolean>
     abstract val histogramBucket: Property<Bucket>
     abstract val enableConsoleLog: Property<Boolean>

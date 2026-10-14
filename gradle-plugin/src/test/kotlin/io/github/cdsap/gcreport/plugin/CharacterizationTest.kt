@@ -89,12 +89,34 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `unit - gbosEnabled keeps the legacy values and appends one observation per collection type`() {
-        val entries = parseScanValues(unitScanLines { gbosEnabled.set(true) })
+    fun `unit - format sink does not enable the Develocity projection`() {
+        listOf<GCReportExtension.() -> Unit>(
+            { gbosJsonEnabled.set(true) },
+            { gbosNdjsonEnabled.set(true) },
+            {
+                gbosJsonEnabled.set(true)
+                gbosNdjsonEnabled.set(true)
+            },
+        ).forEach { configure ->
+            val entries = parseScanValues(unitScanLines(configure))
+            assertEquals(EXPECTED_LEGACY_KEYS, entries.map { it.first })
+        }
+    }
+
+    @Test
+    fun `unit - explicit Develocity GBOS projection retains legacy values by default`() {
+        val entries = parseScanValues(unitScanLines { gbosDevelocityEnabled.set(true) })
 
         assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
         assertEquals(EXPECTED_LEGACY_SCAN_LINES, entries.take(7).map { "SCAN-VALUE ${it.first}=${it.second}" })
         assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
+    }
+
+    @Test
+    fun `unit - deprecated gbosEnabled enables both local-sink-compatible projection and legacy values`() {
+        val entries = parseScanValues(unitScanLines { gbosEnabled.set(true) })
+
+        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
     }
 
     @Test
@@ -103,7 +125,7 @@ class CharacterizationTest {
             parseScanValues(
                 unitScanLines {
                     histogramEnabled.set(true)
-                    gbosEnabled.set(true)
+                    gbosDevelocityEnabled.set(true)
                 },
             )
 
@@ -111,6 +133,20 @@ class CharacterizationTest {
             EXPECTED_LEGACY_KEYS + HISTOGRAM_KEY + List(6) { GBOS_OBSERVATION_KEY },
             entries.map { it.first },
         )
+    }
+
+    @Test
+    fun `unit - legacy Develocity values can be disabled independently`() {
+        val entries =
+            parseScanValues(
+                unitScanLines {
+                    gbosDevelocityEnabled.set(true)
+                    legacyDevelocityValuesEnabled.set(false)
+                },
+            )
+
+        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
+        assertEquals(EXPECTED_OBSERVATIONS, entries.map { describeObservation(it.second) })
     }
 
     // ---------------------------------------------------------------- TestKit level, fake Develocity
@@ -140,16 +176,31 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `fake Develocity in settings - gbosEnabled keeps legacy values and appends observations`() {
-        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = "gbosEnabled.set(true)")
+    fun `fake Develocity in settings - format sink keeps legacy values without projection`() {
+        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = "gbosJsonEnabled.set(true)")
+
+        val result = run()
+
+        assertFakeDevelocityApplied(result)
+        assertEquals(EXPECTED_LEGACY_SCAN_LINES, scanLines(result))
+    }
+
+    @Test
+    fun `fake Develocity in settings - explicit projection can replace legacy values`() {
+        writeProject(
+            settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID),
+            gcReportBody =
+                "gbosJsonEnabled.set(true)\n" +
+                    "gbosDevelocityEnabled.set(true)\n" +
+                    "legacyDevelocityValuesEnabled.set(false)",
+        )
 
         val result = run()
 
         assertFakeDevelocityApplied(result)
         val entries = parseScanValues(result.output.lines())
-        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
-        assertEquals(EXPECTED_LEGACY_SCAN_LINES, entries.take(7).map { "SCAN-VALUE ${it.first}=${it.second}" })
-        assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
+        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
+        assertEquals(EXPECTED_OBSERVATIONS, entries.map { describeObservation(it.second) })
     }
 
     @Test
