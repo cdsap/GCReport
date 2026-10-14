@@ -1,4 +1,4 @@
-package io.github.cdsap.gcreport.plugin
+package io.github.cdsap.gcreport.plugin.report
 
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
@@ -6,28 +6,26 @@ import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.gradle.api.logging.Logging
 import java.io.File
 
-internal class GCReportWriter(
+internal class GCReportFileWriter(
     private val buildOutput: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
 ) {
-    private val logger = Logging.getLogger(GCReportWriter::class.java)
+    private val logger = Logging.getLogger(GCReportFileWriter::class.java)
 
     fun write(
         logFile: File,
-        gcEntries: List<GCEntry>,
+        metrics: GCReportMetrics,
     ) {
         val file = File(buildOutput, logFile.path.getFileNameCsvLog())
         file.parentFile.mkdirs()
 
         val headers = "Collection type,Occurrences\n"
         val content = StringBuilder()
-        val metrics = GCReportMetrics.from(gcEntries)
         logger.lifecycle(
             table {
                 cellStyle {
