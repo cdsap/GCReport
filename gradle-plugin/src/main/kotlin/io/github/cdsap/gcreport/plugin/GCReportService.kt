@@ -1,6 +1,8 @@
 package io.github.cdsap.gcreport.plugin
 
+import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -18,32 +20,53 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         val histogramBucket: Property<Bucket>
         val buildOutput: DirectoryProperty
         val enabledReport: Property<Boolean>
+        val gbosJsonEnabled: Property<Boolean>
+        val gbosNdjsonEnabled: Property<Boolean>
     }
 
     override fun onFinish(event: FinishEvent?) {}
 
     override fun close() {
-        if (parameters.enabledReport.get()) {
+        val outputJson = File(parameters.buildOutput.get().asFile, "gbos.json")
+        val outputNdjson = File(parameters.buildOutput.get().asFile, "gbos.ndjson")
+        if (
+            parameters.enabledReport.get() ||
+            parameters.gbosJsonEnabled.get() ||
+            parameters.gbosNdjsonEnabled.get()
+        ) {
             val writer =
-                GCReportWriter(
-                    parameters.buildOutput.get().asFile,
-                    parameters.histogramEnabled.get(),
-                    parameters.histogramBucket.get(),
-                )
+                if (parameters.enabledReport.get()) {
+                    GCReportWriter(
+                        parameters.buildOutput.get().asFile,
+                        parameters.histogramEnabled.get(),
+                        parameters.histogramBucket.get(),
+                    )
+                } else {
+                    null
+                }
+            val observations = mutableListOf<GbosObservation>()
             for (log in parameters.logs.get().filter { File(it).exists() }) {
-                processLog(File(log), writer)
+                observations += processLog(File(log), writer)
             }
+            GbosOutputReport(outputJson, outputNdjson).write(
+                observations,
+                parameters.gbosJsonEnabled.get(),
+                parameters.gbosNdjsonEnabled.get(),
+            )
+        } else {
+            GbosOutputReport(outputJson, outputNdjson).write(emptyList(), false, false)
         }
     }
 
     private fun processLog(
         logFile: File,
-        writer: GCReportWriter,
-    ) {
+        writer: GCReportWriter?,
+    ): List<GbosObservation> {
         val gcEntries = GCLogReader(logFile).parse()
         if (gcEntries.isEmpty()) {
-            return
+            return emptyList()
         }
-        writer.write(logFile, gcEntries)
+        writer?.write(logFile, gcEntries)
+        return io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection.observations(logFile.path, gcEntries)
     }
 }

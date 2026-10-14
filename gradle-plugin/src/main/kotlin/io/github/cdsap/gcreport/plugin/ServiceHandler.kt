@@ -20,6 +20,8 @@ class ServiceHandler(
                 serviceSpec.parameters.histogramEnabled.set(extension.histogramEnabled)
                 serviceSpec.parameters.histogramBucket.set(extension.histogramBucket)
                 serviceSpec.parameters.buildOutput.set(buildOutput)
+                serviceSpec.parameters.gbosJsonEnabled.set(extension.gbosJsonEnabled)
+                serviceSpec.parameters.gbosNdjsonEnabled.set(extension.gbosNdjsonEnabled)
                 if (enabledReport == null) {
                     serviceSpec.parameters.enabledReport.convention(true)
                 } else {

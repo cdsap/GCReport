@@ -25,6 +25,35 @@ class GCReportPluginWithDevelocityTest {
     lateinit var testProjectDir: File
 
     @Test
+    fun `plugin writes local GBOS output alongside automatically detected Develocity`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        File(testProjectDir, "settings.gradle.kts").writeText(
+            DevelocityTestSupport.settingsScript(
+                configureBody = "buildScan { publishing.onlyIf { false } }",
+                includeGcReport = true,
+                gcReportBody =
+                    """
+                    logs.set(listOf("$gcLog"))
+                    gbosJsonEnabled.set(true)
+                    """.trimIndent(),
+            ),
+        )
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gbos.json").isFile)
+        assertFalse(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
+    }
+
+    @Test
     fun `plugin takes Develocity path without requiring live server credentials`() {
         val gcFile = "gc.log"
         val gcLog = "${testProjectDir.absolutePath}/$gcFile"
