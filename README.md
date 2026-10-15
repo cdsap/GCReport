@@ -64,14 +64,27 @@ observation per line. Files are replaced atomically after successful
 generation, and are removed when their sink is disabled or no observations are
 available.
 
-Develocity is detected automatically. When it is present, enabling either
-local sink also publishes those observations there, while existing GC custom
-values are retained. Existing console output, CSV files, histogram output, and
-log processing remain unchanged.
+Develocity is detected automatically, but its GBOS projection is an independent
+opt-in. `gbosJsonEnabled` and `gbosNdjsonEnabled` control only the corresponding
+local files; set `gbosDevelocityEnabled` to publish the same observations as
+Develocity custom values. Existing GC custom values are retained by default and
+can be disabled with `legacyDevelocityValuesEnabled`. Console output, CSV files,
+histogram output, and log processing remain unchanged.
 
-For migration, the deprecated `gbosEnabled.set(true)` option remains supported
-and enables both local sinks and the Develocity projection. New builds should
-configure the format-specific options instead.
+The Develocity compatibility matrix is:
+
+| Develocity present | `gbosDevelocityEnabled` | `legacyDevelocityValuesEnabled` | Develocity custom values |
+| --- | --- | --- | --- |
+| no | any | any | none |
+| yes | false | true | legacy `gc-*` values (and histogram when enabled) |
+| yes | false | false | none |
+| yes | true | true | legacy values, then GBOS observations |
+| yes | true | false | GBOS observations only |
+
+The local JSON and NDJSON switches do not change this matrix. They only select
+the local sinks. The deprecated `gbosEnabled.set(true)` migration option still
+enables both local sinks and the Develocity projection; use the explicit
+properties for new configurations.
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.
