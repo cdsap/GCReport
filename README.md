@@ -68,17 +68,14 @@ after successful generation, and are removed when GBOS is disabled or no
 observations are available.
 
 With Develocity present, the same switch also publishes the GBOS observations as
-Build Scan custom values. Existing legacy `gc-*` custom values are retained by
-default and can be disabled with `legacyDevelocityValuesEnabled`. Console
-output, CSV files, histogram output, and log processing remain unchanged.
+Build Scan custom values and replaces legacy `gc-*` custom values (including the
+histogram value). Console output, CSV files, and log processing remain unchanged.
 
-| Develocity present | `gbosEnabled` | `legacyDevelocityValuesEnabled` | Develocity custom values |
-| --- | --- | --- | --- |
-| no | any | any | none |
-| yes | false | true | legacy `gc-*` values (and histogram when enabled) |
-| yes | false | false | none |
-| yes | true | true | legacy values, then GBOS observations |
-| yes | true | false | GBOS observations only |
+| Develocity present | `gbosEnabled` | Develocity custom values |
+| --- | --- | --- |
+| no | any | none |
+| yes | false | legacy `gc-*` values (and histogram when enabled) |
+| yes | true | GBOS observations only |
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.

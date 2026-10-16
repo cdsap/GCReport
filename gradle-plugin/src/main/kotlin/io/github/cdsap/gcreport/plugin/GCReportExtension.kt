@@ -11,9 +11,9 @@ abstract class GCReportExtension {
      * Enables all GBOS outputs this plugin supports: local JSON and NDJSON sinks, and the
      * Develocity GBOS projection when Develocity is present. Defaults to `false`; also
      * controllable with the Gradle property `gcReport.gbos.enabled`.
+     * When enabled with Develocity, GBOS replaces legacy `gc-*` custom values.
      */
     abstract val gbosEnabled: Property<Boolean>
-    abstract val legacyDevelocityValuesEnabled: Property<Boolean>
     abstract val histogramEnabled: Property<Boolean>
     abstract val histogramBucket: Property<Bucket>
     abstract val enableConsoleLog: Property<Boolean>
