@@ -54,7 +54,6 @@ internal object GCReportPluginSupport {
                 histogramBucket.convention(Bucket.FreedmanDiaconis)
                 enableConsoleLog.convention(false)
                 GbosOptIn.configureConventions(this, providers)
-                legacyDevelocityValuesEnabled.convention(true)
             }
 
     fun configure(

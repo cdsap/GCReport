@@ -18,14 +18,15 @@ class DevelocityReport(
             val histogramBucket = extension.histogramBucket.get()
             logs.filter { File(it).exists() }.forEach {
                 val gcEntries = GCLogReader(File(it)).parse()
+                // GBOS opt-in replaces legacy gc-* values; without it, legacy (and histogram) only.
                 DevelocityValues(
                     develocityConfiguration,
                     gcEntries,
                     it,
                     histogramEnabled,
                     histogramBucket,
-                    extension.legacyDevelocityValuesEnabled.get(),
-                    gbosEnabled,
+                    legacyValuesEnabled = !gbosEnabled,
+                    gbosEnabled = gbosEnabled,
                 ).report()
             }
         }
