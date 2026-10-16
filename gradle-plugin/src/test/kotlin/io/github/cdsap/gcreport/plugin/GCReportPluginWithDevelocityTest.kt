@@ -35,7 +35,7 @@ class GCReportPluginWithDevelocityTest {
                 gcReportBody =
                     """
                     logs.set(listOf("$gcLog"))
-                    gbosJsonEnabled.set(true)
+                    gbosEnabled.set(true)
                     """.trimIndent(),
             ),
         )
@@ -50,6 +50,7 @@ class GCReportPluginWithDevelocityTest {
 
         assertTrue(result.output.contains("BUILD SUCCESSFUL"))
         assertTrue(testProjectDir.resolve("build/reports/gcreport/gbos.json").isFile)
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gbos.ndjson").isFile)
         assertFalse(testProjectDir.resolve("build/reports/gcreport/gc.csv").exists())
     }
 

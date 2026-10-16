@@ -89,34 +89,12 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `unit - format sink does not enable the Develocity projection`() {
-        listOf<GCReportExtension.() -> Unit>(
-            { gbosJsonEnabled.set(true) },
-            { gbosNdjsonEnabled.set(true) },
-            {
-                gbosJsonEnabled.set(true)
-                gbosNdjsonEnabled.set(true)
-            },
-        ).forEach { configure ->
-            val entries = parseScanValues(unitScanLines(configure))
-            assertEquals(EXPECTED_LEGACY_KEYS, entries.map { it.first })
-        }
-    }
-
-    @Test
-    fun `unit - explicit Develocity GBOS projection retains legacy values by default`() {
-        val entries = parseScanValues(unitScanLines { gbosDevelocityEnabled.set(true) })
+    fun `unit - gbosEnabled publishes Develocity projection and retains legacy values by default`() {
+        val entries = parseScanValues(unitScanLines { gbosEnabled.set(true) })
 
         assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
         assertEquals(EXPECTED_LEGACY_SCAN_LINES, entries.take(7).map { "SCAN-VALUE ${it.first}=${it.second}" })
         assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
-    }
-
-    @Test
-    fun `unit - deprecated gbosEnabled enables both local-sink-compatible projection and legacy values`() {
-        val entries = parseScanValues(unitScanLines { gbosEnabled.set(true) })
-
-        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
     }
 
     @Test
@@ -125,7 +103,7 @@ class CharacterizationTest {
             parseScanValues(
                 unitScanLines {
                     histogramEnabled.set(true)
-                    gbosDevelocityEnabled.set(true)
+                    gbosEnabled.set(true)
                 },
             )
 
@@ -140,7 +118,7 @@ class CharacterizationTest {
         val entries =
             parseScanValues(
                 unitScanLines {
-                    gbosDevelocityEnabled.set(true)
+                    gbosEnabled.set(true)
                     legacyDevelocityValuesEnabled.set(false)
                 },
             )
@@ -176,22 +154,23 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `fake Develocity in settings - format sink keeps legacy values without projection`() {
-        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = "gbosJsonEnabled.set(true)")
+    fun `fake Develocity in settings - gbosEnabled publishes projection with legacy values`() {
+        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = "gbosEnabled.set(true)")
 
         val result = run()
 
         assertFakeDevelocityApplied(result)
-        assertEquals(EXPECTED_LEGACY_SCAN_LINES, scanLines(result))
+        val entries = parseScanValues(result.output.lines())
+        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
+        assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
     }
 
     @Test
-    fun `fake Develocity in settings - explicit projection can replace legacy values`() {
+    fun `fake Develocity in settings - gbosEnabled can replace legacy values`() {
         writeProject(
             settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID),
             gcReportBody =
-                "gbosJsonEnabled.set(true)\n" +
-                    "gbosDevelocityEnabled.set(true)\n" +
+                "gbosEnabled.set(true)\n" +
                     "legacyDevelocityValuesEnabled.set(false)",
         )
 

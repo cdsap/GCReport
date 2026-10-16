@@ -24,8 +24,7 @@ plugins {
 
 gcReport {
     logs.set(listOf("gradle_gc.log"))
-    gbosJsonEnabled.set(true)
-    gbosNdjsonEnabled.set(true)
+    gbosEnabled.set(true)
 }
 ```
 
@@ -50,41 +49,36 @@ org.gradle.jvmargs=-Xlog:gc*:file=/project/gradle_gc.log
 ```kotlin
 gcReport {
     logs.set(listOf("gradle_gc.log"))
-    gbosJsonEnabled.set(true)
-    // gbosNdjsonEnabled.set(true) // optional independent sink
+    gbosEnabled.set(true)
 }
 
 ```
 
-`gbosJsonEnabled` and `gbosNdjsonEnabled` default to `false`. They write the
-same canonical `jvm.gc` observations used by the Develocity projection to
-`build/reports/gcreport/gbos.json` and `build/reports/gcreport/gbos.ndjson`.
-The JSON sink is a GBOS report envelope; NDJSON contains one complete
-observation per line. Files are replaced atomically after successful
-generation, and are removed when their sink is disabled or no observations are
-available.
+GBOS output is disabled by default. Enable all GBOS sinks this plugin supports
+with a single switch — either the DSL `gbosEnabled` or the Gradle property:
 
-Develocity is detected automatically, but its GBOS projection is an independent
-opt-in. `gbosJsonEnabled` and `gbosNdjsonEnabled` control only the corresponding
-local files; set `gbosDevelocityEnabled` to publish the same observations as
-Develocity custom values. Existing GC custom values are retained by default and
-can be disabled with `legacyDevelocityValuesEnabled`. Console output, CSV files,
-histogram output, and log processing remain unchanged.
+```properties
+gcReport.gbos.enabled=true
+```
 
-The Develocity compatibility matrix is:
+When enabled, the plugin writes both `build/reports/gcreport/gbos.json` and
+`build/reports/gcreport/gbos.ndjson`. The JSON sink is a GBOS report envelope;
+NDJSON contains one complete observation per line. Files are replaced atomically
+after successful generation, and are removed when GBOS is disabled or no
+observations are available.
 
-| Develocity present | `gbosDevelocityEnabled` | `legacyDevelocityValuesEnabled` | Develocity custom values |
+With Develocity present, the same switch also publishes the GBOS observations as
+Build Scan custom values. Existing legacy `gc-*` custom values are retained by
+default and can be disabled with `legacyDevelocityValuesEnabled`. Console
+output, CSV files, histogram output, and log processing remain unchanged.
+
+| Develocity present | `gbosEnabled` | `legacyDevelocityValuesEnabled` | Develocity custom values |
 | --- | --- | --- | --- |
 | no | any | any | none |
 | yes | false | true | legacy `gc-*` values (and histogram when enabled) |
 | yes | false | false | none |
 | yes | true | true | legacy values, then GBOS observations |
 | yes | true | false | GBOS observations only |
-
-The local JSON and NDJSON switches do not change this matrix. They only select
-the local sinks. The deprecated `gbosEnabled.set(true)` migration option still
-enables both local sinks and the Develocity projection; use the explicit
-properties for new configurations.
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.

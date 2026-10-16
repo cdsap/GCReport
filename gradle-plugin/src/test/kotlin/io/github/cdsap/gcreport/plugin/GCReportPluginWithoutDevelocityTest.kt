@@ -20,8 +20,7 @@ class GCReportPluginWithoutDevelocityTest {
             gcLog,
             extraGcReportConfig =
                 """
-                gbosJsonEnabled.set(true)
-                gbosNdjsonEnabled.set(true)
+                gbosEnabled.set(true)
                 """.trimIndent(),
         )
         GCReportTestFixtures.writeMinimalBuild(testProjectDir)
@@ -42,6 +41,26 @@ class GCReportPluginWithoutDevelocityTest {
         assertTrue(ndjson.readLines().isNotEmpty())
         assertTrue(ndjson.readLines().all { !it.contains('\n') })
         assertTrue(testProjectDir.resolve("build/reports/gcreport/gc.csv").isFile)
+    }
+
+    @Test
+    fun `plugin writes GBOS JSON and NDJSON when gcReport_gbos_enabled property is set`() {
+        val gcLog = "${testProjectDir.absolutePath}/gc.log"
+        GCReportTestFixtures.writeJvmGcProperties(testProjectDir, gcLog)
+        File(testProjectDir, "gradle.properties").appendText("\ngcReport.gbos.enabled=true\n")
+        GCReportTestFixtures.writeKotlinSettings(testProjectDir, gcLog)
+        GCReportTestFixtures.writeMinimalBuild(testProjectDir)
+
+        val result =
+            GradleRunner.create()
+                .withProjectDir(testProjectDir)
+                .withArguments("tasks")
+                .withPluginClasspath()
+                .build()
+
+        assertTrue(result.output.contains("BUILD SUCCESSFUL"))
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gbos.json").isFile)
+        assertTrue(testProjectDir.resolve("build/reports/gcreport/gbos.ndjson").isFile)
     }
 
     @Test
