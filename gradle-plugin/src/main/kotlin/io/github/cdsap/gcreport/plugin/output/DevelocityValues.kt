@@ -15,7 +15,7 @@ class DevelocityValues(
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
     private val legacyValuesEnabled: Boolean,
-    private val gbosDevelocityEnabled: Boolean,
+    private val gbosEnabled: Boolean,
 ) {
     fun report() {
         val metrics = GCReportMetrics.from(gcEntries)
@@ -42,7 +42,7 @@ class DevelocityValues(
                     buildScan.value("gc-${log.getFileName()}-histogram", "${histogramText.dropLast(1)}]")
                 }
             }
-            if (gbosDevelocityEnabled) {
+            if (gbosEnabled) {
                 GbosDevelocityProjection.observations(log, gcEntries).forEach { observation ->
                     buildScan.value(GbosDevelocityProjection.OBSERVATION_CUSTOM_VALUE, GbosJson.encode(observation))
                 }

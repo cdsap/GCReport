@@ -7,6 +7,7 @@ import org.gradle.api.Project
 import org.gradle.api.initialization.Settings
 import org.gradle.api.invocation.Gradle
 import org.gradle.api.plugins.ExtensionAware
+import org.gradle.api.provider.ProviderFactory
 import org.gradle.build.event.BuildEventsListenerRegistry
 
 /**
@@ -37,18 +38,22 @@ internal object GCReportPluginSupport {
         }
     }
 
+    fun createExtension(settings: Settings): GCReportExtension = createExtension(settings, settings.providers)
+
+    fun createExtension(project: Project): GCReportExtension = createExtension(project, project.providers)
+
     // Idempotent so the legacy id and the `.project` alias (separate plugin classes) can both be
     // applied to the same project without a duplicate-extension failure.
-    fun createExtension(host: ExtensionAware): GCReportExtension =
+    fun createExtension(
+        host: ExtensionAware,
+        providers: ProviderFactory,
+    ): GCReportExtension =
         host.extensions.findByType(GCReportExtension::class.java)
             ?: host.extensions.create("gcReport", GCReportExtension::class.java).apply {
                 histogramEnabled.convention(false)
                 histogramBucket.convention(Bucket.FreedmanDiaconis)
                 enableConsoleLog.convention(false)
-                gbosEnabled.convention(false)
-                gbosJsonEnabled.convention(gbosEnabled)
-                gbosNdjsonEnabled.convention(gbosEnabled)
-                gbosDevelocityEnabled.convention(gbosEnabled)
+                GbosOptIn.configureConventions(this, providers)
                 legacyDevelocityValuesEnabled.convention(true)
             }
 

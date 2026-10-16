@@ -20,8 +20,9 @@ class ServiceHandler(
                 serviceSpec.parameters.histogramEnabled.set(extension.histogramEnabled)
                 serviceSpec.parameters.histogramBucket.set(extension.histogramBucket)
                 serviceSpec.parameters.buildOutput.set(buildOutput)
-                serviceSpec.parameters.gbosJsonEnabled.set(extension.gbosJsonEnabled)
-                serviceSpec.parameters.gbosNdjsonEnabled.set(extension.gbosNdjsonEnabled)
+                // Both local sinks follow the single gbosEnabled opt-in.
+                serviceSpec.parameters.gbosJsonEnabled.set(extension.gbosEnabled)
+                serviceSpec.parameters.gbosNdjsonEnabled.set(extension.gbosEnabled)
                 if (enabledReport == null) {
                     serviceSpec.parameters.enabledReport.convention(true)
                 } else {
