@@ -1,4 +1,4 @@
-package io.github.cdsap.gcreport.plugin.report
+package io.github.cdsap.gcreport.plugin.output
 
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
@@ -6,21 +6,23 @@ import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.gradle.api.logging.Logging
 import java.io.File
 
-internal class GCReportFileWriter(
+internal class ConsoleReportWriter(
     private val buildOutput: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
 ) {
-    private val logger = Logging.getLogger(GCReportFileWriter::class.java)
+    private val logger = Logging.getLogger(ConsoleReportWriter::class.java)
 
     fun write(
         logFile: File,
-        metrics: GCReportMetrics,
+        entries: List<GCEntry>,
     ) {
+        val metrics = GCReportMetrics.from(entries)
         val file = File(buildOutput, logFile.path.getFileNameCsvLog())
         file.parentFile.mkdirs()
 
@@ -79,8 +81,8 @@ internal class GCReportFileWriter(
                     }
                     row("Bucket", "Occurrences")
                     val histogram = Histogram(histogramBucket)
-                    val entries = histogram.getHistogram(metrics.entriesForHistogram())
-                    entries.forEach { (bucket, count) ->
+                    val histogramEntries = histogram.getHistogram(metrics.entriesForHistogram())
+                    histogramEntries.forEach { (bucket, count) ->
                         contentHistogram.append("$bucket,$count\n")
                         row {
                             cell(bucket)

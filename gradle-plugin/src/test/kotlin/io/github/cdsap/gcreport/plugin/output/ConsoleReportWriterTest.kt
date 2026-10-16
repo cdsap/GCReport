@@ -1,25 +1,23 @@
-package io.github.cdsap.gcreport.plugin.report
+package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
-import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class GCReportFileWriterTest {
+class ConsoleReportWriterTest {
     @TempDir
     lateinit var outputDirectory: File
 
     @Test
     fun `writes collection csv`() {
         val logFile = File("/logs/gc.log")
-        val metrics = metrics()
 
-        GCReportFileWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
-            .write(logFile, metrics)
+        ConsoleReportWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
+            .write(logFile, entries())
 
         assertEquals(
             "Collection type,Occurrences\n" +
@@ -34,8 +32,8 @@ class GCReportFileWriterTest {
     fun `writes histogram csv when enabled`() {
         val logFile = File("/logs/gc.log")
 
-        GCReportFileWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
-            .write(logFile, metrics())
+        ConsoleReportWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
+            .write(logFile, entries())
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -47,13 +45,11 @@ class GCReportFileWriterTest {
         )
     }
 
-    private fun metrics(): GCReportMetrics =
-        GCReportMetrics.from(
-            listOf(
-                gcEntry("1.00", "Pause Young (Normal)"),
-                gcEntry("2.00", "Pause Young (Normal)"),
-                gcEntry("3.00", "Pause Full (System.gc())"),
-            ),
+    private fun entries(): List<GCEntry> =
+        listOf(
+            gcEntry("1.00", "Pause Young (Normal)"),
+            gcEntry("2.00", "Pause Young (Normal)"),
+            gcEntry("3.00", "Pause Full (System.gc())"),
         )
 
     private fun gcEntry(

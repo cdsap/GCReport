@@ -2,10 +2,9 @@ package io.github.cdsap.gcreport.plugin
 
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
+import io.github.cdsap.gcreport.plugin.output.ConsoleReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogReader
-import io.github.cdsap.gcreport.plugin.report.GCReportFileWriter
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -38,7 +37,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         ) {
             val writer =
                 if (parameters.enabledReport.get()) {
-                    GCReportFileWriter(
+                    ConsoleReportWriter(
                         parameters.buildOutput.get().asFile,
                         parameters.histogramEnabled.get(),
                         parameters.histogramBucket.get(),
@@ -62,13 +61,13 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     private fun processLog(
         logFile: File,
-        writer: GCReportFileWriter?,
+        writer: ConsoleReportWriter?,
     ): List<GbosObservation> {
         val gcEntries = GCLogReader(logFile).parse()
         if (gcEntries.isEmpty()) {
             return emptyList()
         }
-        writer?.write(logFile, GCReportMetrics.from(gcEntries))
+        writer?.write(logFile, gcEntries)
         return io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection.observations(logFile.path, gcEntries)
     }
 }
