@@ -2,9 +2,10 @@ package io.github.cdsap.gcreport.plugin
 
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.output.ConsoleReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
-import io.github.cdsap.gcreport.plugin.parser.GCLogReader
+import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -46,8 +47,8 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
                     null
                 }
             val observations = mutableListOf<GbosObservation>()
-            for (log in parameters.logs.get().filter { File(it).exists() }) {
-                observations += processLog(File(log), writer)
+            for (log in GCLogLoader().load(parameters.logs.get())) {
+                observations += processLog(log.file, log.entries, writer)
             }
             GbosOutputReport(outputJson, outputNdjson).write(
                 observations,
@@ -61,9 +62,9 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     private fun processLog(
         logFile: File,
+        gcEntries: List<GCEntry>,
         writer: ConsoleReportWriter?,
     ): List<GbosObservation> {
-        val gcEntries = GCLogReader(logFile).parse()
         if (gcEntries.isEmpty()) {
             return emptyList()
         }
