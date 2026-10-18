@@ -3,8 +3,8 @@ package io.github.cdsap.gcreport.plugin
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
-import io.github.cdsap.gcreport.plugin.output.ConsoleReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
+import io.github.cdsap.gcreport.plugin.output.LocalReportWriter
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
@@ -38,7 +38,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         ) {
             val writer =
                 if (parameters.enabledReport.get()) {
-                    ConsoleReportWriter(
+                    LocalReportWriter(
                         parameters.buildOutput.get().asFile,
                         parameters.histogramEnabled.get(),
                         parameters.histogramBucket.get(),
@@ -63,7 +63,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
     private fun processLog(
         logFile: File,
         gcEntries: List<GCEntry>,
-        writer: ConsoleReportWriter?,
+        writer: LocalReportWriter?,
     ): List<GbosObservation> {
         if (gcEntries.isEmpty()) {
             return emptyList()

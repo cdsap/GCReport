@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class ConsoleReportWriterTest {
+class LocalReportWriterTest {
     @TempDir
     lateinit var outputDirectory: File
 
@@ -16,7 +16,7 @@ class ConsoleReportWriterTest {
     fun `writes collection csv`() {
         val logFile = File("/logs/gc.log")
 
-        ConsoleReportWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
+        LocalReportWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
             .write(logFile, entries())
 
         assertEquals(
@@ -32,7 +32,7 @@ class ConsoleReportWriterTest {
     fun `writes histogram csv when enabled`() {
         val logFile = File("/logs/gc.log")
 
-        ConsoleReportWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
+        LocalReportWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
             .write(logFile, entries())
 
         assertEquals(
