@@ -11,12 +11,12 @@ import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.gradle.api.logging.Logging
 import java.io.File
 
-internal class ConsoleReportWriter(
+internal class LocalReportWriter(
     private val buildOutput: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
 ) {
-    private val logger = Logging.getLogger(ConsoleReportWriter::class.java)
+    private val logger = Logging.getLogger(LocalReportWriter::class.java)
 
     fun write(
         logFile: File,
