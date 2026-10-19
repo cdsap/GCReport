@@ -1,23 +1,22 @@
-package io.github.cdsap.gcreport.plugin.output
+package io.github.cdsap.gcreport.plugin.report
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
+import io.github.cdsap.gcreport.plugin.parser.ParsedGCLog
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class LocalReportWriterTest {
+class GCReportWriterTest {
     @TempDir
     lateinit var outputDirectory: File
 
     @Test
-    fun `writes collection csv`() {
-        val logFile = File("/logs/gc.log")
-
-        LocalReportWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
-            .write(logFile, entries())
+    fun `writes collection counts and expected csv filename`() {
+        GCReportWriter(outputDirectory, options(histogramEnabled = false))
+            .write(listOf(parsedLog()))
 
         assertEquals(
             "Collection type,Occurrences\n" +
@@ -29,11 +28,9 @@ class LocalReportWriterTest {
     }
 
     @Test
-    fun `writes histogram csv when enabled`() {
-        val logFile = File("/logs/gc.log")
-
-        LocalReportWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
-            .write(logFile, entries())
+    fun `writes histogram output and expected filename when enabled`() {
+        GCReportWriter(outputDirectory, options(histogramEnabled = true))
+            .write(listOf(parsedLog()))
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -45,11 +42,23 @@ class LocalReportWriterTest {
         )
     }
 
-    private fun entries(): List<GCEntry> =
-        listOf(
-            gcEntry("1.00", "Pause Young (Normal)"),
-            gcEntry("2.00", "Pause Young (Normal)"),
-            gcEntry("3.00", "Pause Full (System.gc())"),
+    private fun options(histogramEnabled: Boolean) =
+        GCReportOutputOptions(
+            reportEnabled = true,
+            histogramEnabled = histogramEnabled,
+            histogramBucket = Bucket.SquareRoot,
+            gbosJsonEnabled = false,
+            gbosNdjsonEnabled = false,
+        )
+
+    private fun parsedLog() =
+        ParsedGCLog(
+            File("/logs/gc.log"),
+            listOf(
+                gcEntry("1.00", "Pause Young (Normal)"),
+                gcEntry("2.00", "Pause Young (Normal)"),
+                gcEntry("3.00", "Pause Full (System.gc())"),
+            ),
         )
 
     private fun gcEntry(

@@ -1,24 +1,51 @@
-package io.github.cdsap.gcreport.plugin.output
+package io.github.cdsap.gcreport.plugin.report
 
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
+import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
+import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
+import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
+import io.github.cdsap.gcreport.plugin.parser.ParsedGCLog
 import org.gradle.api.logging.Logging
 import java.io.File
 
-internal class LocalReportWriter(
-    private val buildOutput: File,
-    private val histogramEnabled: Boolean,
-    private val histogramBucket: Bucket,
-) {
-    private val logger = Logging.getLogger(LocalReportWriter::class.java)
+internal data class GCReportOutputOptions(
+    val reportEnabled: Boolean,
+    val histogramEnabled: Boolean,
+    val histogramBucket: Bucket,
+    val gbosJsonEnabled: Boolean,
+    val gbosNdjsonEnabled: Boolean,
+)
 
-    fun write(
+internal class GCReportWriter(
+    private val buildOutput: File,
+    private val options: GCReportOutputOptions,
+) {
+    private val logger = Logging.getLogger(GCReportWriter::class.java)
+
+    fun write(logs: List<ParsedGCLog>) {
+        val observations = mutableListOf<GbosObservation>()
+        logs.forEach { log ->
+            if (log.entries.isNotEmpty()) {
+                if (options.reportEnabled) {
+                    writeLocalReport(log.file, log.entries)
+                }
+                observations += GbosDevelocityProjection.observations(log.file.path, log.entries)
+            }
+        }
+        GbosOutputReport(
+            File(buildOutput, "gbos.json"),
+            File(buildOutput, "gbos.ndjson"),
+        ).write(observations, options.gbosJsonEnabled, options.gbosNdjsonEnabled)
+    }
+
+    private fun writeLocalReport(
         logFile: File,
         entries: List<GCEntry>,
     ) {
@@ -55,7 +82,7 @@ internal class LocalReportWriter(
         )
         file.writeText(headers + content)
 
-        if (histogramEnabled) {
+        if (options.histogramEnabled) {
             val fileHistogram = File(buildOutput, "histogram_${logFile.path.getFileNameCsvLog()}")
             fileHistogram.parentFile.mkdirs()
             val headersHistogram = "Bucket,Occurrences\n"
@@ -75,12 +102,12 @@ internal class LocalReportWriter(
                         }
                     }
                     row {
-                        cell("Type: ${histogramBucket.name}") {
+                        cell("Type: ${options.histogramBucket.name}") {
                             columnSpan = 2
                         }
                     }
                     row("Bucket", "Occurrences")
-                    val histogram = Histogram(histogramBucket)
+                    val histogram = Histogram(options.histogramBucket)
                     val histogramEntries = histogram.getHistogram(metrics.entriesForHistogram())
                     histogramEntries.forEach { (bucket, count) ->
                         contentHistogram.append("$bucket,$count\n")
