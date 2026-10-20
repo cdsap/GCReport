@@ -4,11 +4,11 @@ import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
-import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
+import io.github.cdsap.gcreport.plugin.output.GCReportCsvWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.ParsedGCLog
@@ -28,6 +28,7 @@ internal class GCReportWriter(
     private val options: GCReportOutputOptions,
 ) {
     private val logger = Logging.getLogger(GCReportWriter::class.java)
+    private val csvWriter = GCReportCsvWriter(buildOutput, options.histogramEnabled, options.histogramBucket)
 
     fun write(logs: List<ParsedGCLog>) {
         val observations = mutableListOf<GbosObservation>()
@@ -50,11 +51,7 @@ internal class GCReportWriter(
         entries: List<GCEntry>,
     ) {
         val metrics = GCReportMetrics.from(entries)
-        val file = File(buildOutput, logFile.path.getFileNameCsvLog())
-        file.parentFile.mkdirs()
-
-        val headers = "Collection type,Occurrences\n"
-        val content = StringBuilder()
+        csvWriter.write(logFile, metrics)
         logger.lifecycle(
             table {
                 cellStyle {
@@ -70,7 +67,6 @@ internal class GCReportWriter(
                 }
                 row("Collection type", "Occurrences")
                 metrics.collectionTypeCounts().forEach { (description, count) ->
-                    content.append("$description,$count\n")
                     row {
                         cell(description)
                         cell(count) {
@@ -80,14 +76,8 @@ internal class GCReportWriter(
                 }
             }.toString(),
         )
-        file.writeText(headers + content)
 
         if (options.histogramEnabled) {
-            val fileHistogram = File(buildOutput, "histogram_${logFile.path.getFileNameCsvLog()}")
-            fileHistogram.parentFile.mkdirs()
-            val headersHistogram = "Bucket,Occurrences\n"
-            val contentHistogram = StringBuilder()
-
             logger.lifecycle(
                 table {
                     cellStyle {
@@ -110,7 +100,6 @@ internal class GCReportWriter(
                     val histogram = Histogram(options.histogramBucket)
                     val histogramEntries = histogram.getHistogram(metrics.entriesForHistogram())
                     histogramEntries.forEach { (bucket, count) ->
-                        contentHistogram.append("$bucket,$count\n")
                         row {
                             cell(bucket)
                             cell(count) {
@@ -120,7 +109,6 @@ internal class GCReportWriter(
                     }
                 }.toString(),
             )
-            fileHistogram.writeText(headersHistogram + contentHistogram)
         }
     }
 }
