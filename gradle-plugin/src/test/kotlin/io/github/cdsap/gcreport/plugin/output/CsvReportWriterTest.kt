@@ -9,13 +9,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class GCReportCsvWriterTest {
+class CsvReportWriterTest {
     @TempDir
     lateinit var outputDirectory: File
 
     @Test
     fun `writes collection counts and expected csv filename`() {
-        GCReportCsvWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
+        CsvReportWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
             .write(logFile(), metrics())
 
         assertEquals(
@@ -29,7 +29,7 @@ class GCReportCsvWriterTest {
 
     @Test
     fun `writes histogram output and expected filename when enabled`() {
-        GCReportCsvWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
+        CsvReportWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
             .write(logFile(), metrics())
 
         assertEquals(

@@ -6,7 +6,7 @@ import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import java.io.File
 
-internal class GCReportCsvWriter(
+internal class CsvReportWriter(
     private val buildOutput: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,

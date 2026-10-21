@@ -8,7 +8,7 @@ import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
-import io.github.cdsap.gcreport.plugin.output.GCReportCsvWriter
+import io.github.cdsap.gcreport.plugin.output.CsvReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.ParsedGCLog
@@ -28,7 +28,7 @@ internal class GCReportWriter(
     private val options: GCReportOutputOptions,
 ) {
     private val logger = Logging.getLogger(GCReportWriter::class.java)
-    private val csvWriter = GCReportCsvWriter(buildOutput, options.histogramEnabled, options.histogramBucket)
+    private val csvWriter = CsvReportWriter(buildOutput, options.histogramEnabled, options.histogramBucket)
 
     fun write(logs: List<ParsedGCLog>) {
         val observations = mutableListOf<GbosObservation>()
