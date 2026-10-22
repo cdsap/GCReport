@@ -1,22 +1,22 @@
-package io.github.cdsap.gcreport.plugin.report
+package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
-import io.github.cdsap.gcreport.plugin.parser.ParsedGCLog
+import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class GCReportWriterTest {
+class GCReportFileWriterTest {
     @TempDir
     lateinit var outputDirectory: File
 
     @Test
     fun `writes collection counts and expected csv filename`() {
-        GCReportWriter(outputDirectory, options(histogramEnabled = false))
-            .write(listOf(parsedLog()))
+        GCReportFileWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
+            .write(File("/logs/gc.log"), metrics())
 
         assertEquals(
             "Collection type,Occurrences\n" +
@@ -29,8 +29,8 @@ class GCReportWriterTest {
 
     @Test
     fun `writes histogram output and expected filename when enabled`() {
-        GCReportWriter(outputDirectory, options(histogramEnabled = true))
-            .write(listOf(parsedLog()))
+        GCReportFileWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
+            .write(File("/logs/gc.log"), metrics())
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -42,18 +42,8 @@ class GCReportWriterTest {
         )
     }
 
-    private fun options(histogramEnabled: Boolean) =
-        GCReportOutputOptions(
-            reportEnabled = true,
-            histogramEnabled = histogramEnabled,
-            histogramBucket = Bucket.SquareRoot,
-            gbosJsonEnabled = false,
-            gbosNdjsonEnabled = false,
-        )
-
-    private fun parsedLog() =
-        ParsedGCLog(
-            File("/logs/gc.log"),
+    private fun metrics() =
+        GCReportMetrics.from(
             listOf(
                 gcEntry("1.00", "Pause Young (Normal)"),
                 gcEntry("2.00", "Pause Young (Normal)"),
