@@ -3,15 +3,17 @@ package io.github.cdsap.gcreport.plugin.parser
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 
 class GCLogParser {
+    private val gcEntryRegex =
+        """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\) (.+?) (\d+)([A-Z])->(\d+)([A-Z])\((\d+)([A-Z])\) (\d+\.\d+)([a-z]+)""".toRegex()
+    private val gcLineRegex = """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\)""".toRegex()
+    private val gcDurationRegex =
+        """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\) (.+?) (\d+\.\d+)([a-z]+)""".toRegex()
+
     fun parse(lines: List<String>): List<GCEntry> {
         val maxGC = mutableListOf<GCEntry>()
 
-        lines.forEach {
-            val regex =
-                """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\) (.+?) (\d+)([A-Z])->(\d+)([A-Z])\((\d+)([A-Z])\) (\d+\.\d+)([a-z]+)""".toRegex()
-
-            val match = regex.find(it)
-
+        lines.forEach { line ->
+            val match = gcEntryRegex.find(line)
             if (match != null) {
                 val groups = match.groupValues
                 maxGC.add(
@@ -38,17 +40,13 @@ class GCLogParser {
         // phases: Pause Remark and Pause Cleanup, something we are not interested.
         val tempMaxGc = mutableListOf<GCEntry>()
         maxGC.groupBy { it.id }
-            .filter { it.value.size > 1 }.forEach {
-                val id = it.key
-                val regex2 = """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\($id\)""".toRegex()
+            .filter { it.value.size > 1 }.forEach { (id, _) ->
                 val x =
-                    lines.last {
-                        val a = regex2.find(it)
-                        a != null
+                    lines.last { line ->
+                        gcLineRegex.find(line)?.groupValues?.get(3) == id
                     }
 
-                val regex3 = """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\) (.+?) (\d+\.\d+)([a-z]+)""".toRegex()
-                val match = regex3.find(x)
+                val match = gcDurationRegex.find(x)
                 if (match != null) {
                     val (timestamp, timestampUnit, id, description, duration, durationUnit) = match.destructured
                     tempMaxGc.add(
