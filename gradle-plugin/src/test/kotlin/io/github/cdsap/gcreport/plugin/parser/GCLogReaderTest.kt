@@ -68,6 +68,30 @@ class GCLogReaderTest {
     }
 
     @Test
+    fun `parse concurrent mark cycle from in-memory log lines`() {
+        val gcEntries =
+            GCLogParser().parse(
+                listOf(
+                    "[1.000s][info   ][gc          ] GC(1) Pause Remark 25M->25M(4096M) 0.941ms",
+                    "[1.001s][info   ][gc          ] GC(1) Pause Cleanup 26M->26M(4096M) 0.010ms",
+                    "[1.002s][info   ][gc          ] GC(1) Concurrent Mark Cycle 10.974ms",
+                ),
+            )
+
+        assertEquals(
+            GCEntry(
+                timeStamp = "1.002",
+                timeStampUnit = "s",
+                id = "1",
+                description = "Concurrent Mark Cycle",
+                duration = "10.974",
+                durationUnit = "ms",
+            ),
+            gcEntries.single(),
+        )
+    }
+
+    @Test
     fun `parse complex G1 log with multiple events`() {
         val logFile = File("src/test/resources/correct_g1_log")
         val reader = GCLogReader(logFile)
