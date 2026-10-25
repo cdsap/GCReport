@@ -2,7 +2,6 @@ package io.github.cdsap.gcreport.plugin.report
 
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.output.GCReportFileWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
@@ -33,7 +32,7 @@ internal class GCReportWriter(
         logs.forEach { log ->
             if (log.entries.isNotEmpty()) {
                 if (options.reportEnabled) {
-                    fileWriter.write(log.file, GCReportMetrics.from(log.entries))
+                    fileWriter.write(log.file, log.entries)
                 }
                 observations += GbosDevelocityProjection.observations(log.file.path, log.entries)
             }

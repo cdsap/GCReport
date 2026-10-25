@@ -2,7 +2,6 @@ package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
-import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Test
@@ -16,7 +15,7 @@ class GCReportFileWriterTest {
     @Test
     fun `writes collection counts and expected csv filename`() {
         GCReportFileWriter(outputDirectory, histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
-            .write(File("/logs/gc.log"), metrics())
+            .write(File("/logs/gc.log"), entries())
 
         assertEquals(
             "Collection type,Occurrences\n" +
@@ -30,7 +29,7 @@ class GCReportFileWriterTest {
     @Test
     fun `writes histogram output and expected filename when enabled`() {
         GCReportFileWriter(outputDirectory, histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
-            .write(File("/logs/gc.log"), metrics())
+            .write(File("/logs/gc.log"), entries())
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -42,13 +41,11 @@ class GCReportFileWriterTest {
         )
     }
 
-    private fun metrics() =
-        GCReportMetrics.from(
-            listOf(
-                gcEntry("1.00", "Pause Young (Normal)"),
-                gcEntry("2.00", "Pause Young (Normal)"),
-                gcEntry("3.00", "Pause Full (System.gc())"),
-            ),
+    private fun entries() =
+        listOf(
+            gcEntry("1.00", "Pause Young (Normal)"),
+            gcEntry("2.00", "Pause Young (Normal)"),
+            gcEntry("3.00", "Pause Full (System.gc())"),
         )
 
     private fun gcEntry(
