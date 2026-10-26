@@ -1,9 +1,11 @@
 package io.github.cdsap.gcreport.plugin
 
+import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
+import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
-import io.github.cdsap.gcreport.plugin.report.GCReportOutputOptions
-import io.github.cdsap.gcreport.plugin.report.GCReportWriter
+import io.github.cdsap.gcreport.plugin.report.GCLogReportWriter
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
@@ -11,6 +13,7 @@ import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.tooling.events.FinishEvent
 import org.gradle.tooling.events.OperationCompletionListener
+import java.io.File
 
 abstract class GCReportService : BuildService<GCReportService.Params>, AutoCloseable, OperationCompletionListener {
     interface Params : BuildServiceParameters {
@@ -26,15 +29,32 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
     override fun onFinish(event: FinishEvent?) {}
 
     override fun close() {
-        GCReportWriter(
-            parameters.buildOutput.get().asFile,
-            GCReportOutputOptions(
-                reportEnabled = parameters.enabledReport.get(),
-                histogramEnabled = parameters.histogramEnabled.get(),
-                histogramBucket = parameters.histogramBucket.get(),
-                gbosJsonEnabled = parameters.gbosJsonEnabled.get(),
-                gbosNdjsonEnabled = parameters.gbosNdjsonEnabled.get(),
-            ),
-        ).write(GCLogLoader().load(parameters.logs.get()))
+        val buildOutput = parameters.buildOutput.get().asFile
+        val reportWriter =
+            GCLogReportWriter(
+                buildOutput,
+                parameters.histogramEnabled.get(),
+                parameters.histogramBucket.get(),
+            )
+        val reportEnabled = parameters.enabledReport.get()
+        val observations = mutableListOf<GbosObservation>()
+
+        GCLogLoader().load(parameters.logs.get()).forEach { log ->
+            if (log.entries.isNotEmpty()) {
+                if (reportEnabled) {
+                    reportWriter.write(log.file, log.entries)
+                }
+                observations += GbosDevelocityProjection.observations(log.file.path, log.entries)
+            }
+        }
+
+        GbosOutputReport(
+            File(buildOutput, "gbos.json"),
+            File(buildOutput, "gbos.ndjson"),
+        ).write(
+            observations,
+            parameters.gbosJsonEnabled.get(),
+            parameters.gbosNdjsonEnabled.get(),
+        )
     }
 }
