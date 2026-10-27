@@ -5,7 +5,6 @@ import com.jakewharton.picnic.table
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
 internal class ConsoleReport(
@@ -14,9 +13,8 @@ internal class ConsoleReport(
 ) {
     fun render(
         logName: String,
-        entries: List<GCEntry>,
+        metrics: GCReportMetrics,
     ): List<String> {
-        val metrics = GCReportMetrics.from(entries)
         return buildList {
             add(renderCollectionTable(logName, metrics))
             if (histogramEnabled) {

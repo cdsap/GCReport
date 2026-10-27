@@ -2,6 +2,7 @@ package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
+import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
@@ -24,7 +25,7 @@ class ConsoleReportTest {
                 └──────────────────────────┴─────────────┘
                 """.trimIndent(),
             ),
-            report.render("gc.log", entries()),
+            report.render("gc.log", metrics()),
         )
     }
 
@@ -32,7 +33,7 @@ class ConsoleReportTest {
     fun `renders histogram table when enabled`() {
         val report = ConsoleReport(histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
 
-        assertEquals(2, report.render("gc.log", entries()).size)
+        assertEquals(2, report.render("gc.log", metrics()).size)
         assertEquals(
             """
             ┌─────────────────────────┐
@@ -51,15 +52,17 @@ class ConsoleReportTest {
             │ 3.00-End  │           1 │
             └───────────┴─────────────┘
             """.trimIndent(),
-            report.render("gc.log", entries())[1],
+            report.render("gc.log", metrics())[1],
         )
     }
 
-    private fun entries() =
-        listOf(
-            gcEntry("1.00", "Pause Young (Normal)"),
-            gcEntry("2.00", "Pause Young (Normal)"),
-            gcEntry("3.00", "Pause Full (System.gc())"),
+    private fun metrics() =
+        GCReportMetrics.from(
+            listOf(
+                gcEntry("1.00", "Pause Young (Normal)"),
+                gcEntry("2.00", "Pause Young (Normal)"),
+                gcEntry("3.00", "Pause Full (System.gc())"),
+            ),
         )
 
     private fun gcEntry(
