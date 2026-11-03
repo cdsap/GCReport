@@ -2,12 +2,10 @@ package io.github.cdsap.gcreport.plugin
 
 import org.gradle.api.provider.ProviderFactory
 
-/**
- * Single GBOS opt-in: one Gradle property and the public DSL [GCReportExtension.gbosEnabled]
- * enable JSON, NDJSON, and Develocity GBOS outputs together.
- */
+/** Gradle-property conventions for the independent local and Develocity GBOS sinks. */
 internal object GbosOptIn {
     const val PROPERTY_ENABLED = "gcReport.gbos.enabled"
+    const val PROPERTY_DEVELOCITY_ENABLED = "gcReport.gbos.develocity.enabled"
 
     fun configureConventions(
         extension: GCReportExtension,
@@ -16,5 +14,9 @@ internal object GbosOptIn {
         extension.gbosEnabled.convention(
             providers.gradleProperty(PROPERTY_ENABLED).map(String::toBoolean).orElse(false),
         )
+        extension.gbosDevelocityEnabled.convention(
+            providers.gradleProperty(PROPERTY_DEVELOCITY_ENABLED).map(String::toBoolean).orElse(false),
+        )
+        extension.legacyDevelocityValuesEnabled.convention(true)
     }
 }

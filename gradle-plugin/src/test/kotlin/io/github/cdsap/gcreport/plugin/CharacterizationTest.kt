@@ -89,25 +89,27 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `unit - gbosEnabled publishes Develocity projection and replaces legacy values`() {
+    fun `unit - local GBOS opt-in does not enable Develocity projection`() {
         val entries = parseScanValues(unitScanLines { gbosEnabled.set(true) })
 
-        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
-        assertEquals(EXPECTED_OBSERVATIONS, entries.map { describeObservation(it.second) })
+        assertEquals(EXPECTED_LEGACY_KEYS, entries.map { it.first })
     }
 
     @Test
-    fun `unit - histogram is omitted when gbos replaces legacy values`() {
+    fun `unit - Develocity GBOS opt-in publishes alongside legacy values`() {
         val entries =
             parseScanValues(
                 unitScanLines {
                     histogramEnabled.set(true)
-                    gbosEnabled.set(true)
+                    gbosDevelocityEnabled.set(true)
                 },
             )
 
-        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
-        assertTrue(entries.none { it.first == HISTOGRAM_KEY })
+        assertEquals(
+            EXPECTED_LEGACY_KEYS + listOf(HISTOGRAM_KEY) + List(6) { GBOS_OBSERVATION_KEY },
+            entries.map { it.first },
+        )
+        assertEquals(EXPECTED_OBSERVATIONS, entries.drop(8).map { describeObservation(it.second) })
     }
 
     // ---------------------------------------------------------------- TestKit level, fake Develocity
@@ -137,15 +139,46 @@ class CharacterizationTest {
     }
 
     @Test
-    fun `fake Develocity in settings - gbosEnabled publishes projection without legacy values`() {
-        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = "gbosEnabled.set(true)")
+    fun `fake Develocity in settings - Develocity GBOS opt-in publishes alongside legacy values`() {
+        writeProject(
+            settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID),
+            gcReportBody = "gbosDevelocityEnabled.set(true)",
+        )
 
         val result = run()
 
         assertFakeDevelocityApplied(result)
         val entries = parseScanValues(result.output.lines())
-        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
-        assertEquals(EXPECTED_OBSERVATIONS, entries.map { describeObservation(it.second) })
+        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
+        assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
+    }
+
+    @Test
+    fun `fake Develocity in settings - local GBOS opt-in leaves legacy values enabled`() {
+        writeProject(
+            settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID),
+            gcReportBody = "gbosEnabled.set(true)",
+        )
+
+        val result = run()
+
+        assertFakeDevelocityApplied(result)
+        assertEquals(EXPECTED_LEGACY_SCAN_LINES, scanLines(result))
+        assertTrue(reportsDir().resolve("gbos.json").isFile)
+        assertTrue(reportsDir().resolve("gbos.ndjson").isFile)
+    }
+
+    @Test
+    fun `Gradle property independently enables the Develocity GBOS projection`() {
+        writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID))
+        File(testProjectDir, "gradle.properties").appendText("gcReport.gbos.develocity.enabled=true\n")
+
+        val result = run()
+
+        assertFakeDevelocityApplied(result)
+        val entries = parseScanValues(result.output.lines())
+        assertEquals(EXPECTED_LEGACY_KEYS + List(6) { GBOS_OBSERVATION_KEY }, entries.map { it.first })
+        assertEquals(EXPECTED_OBSERVATIONS, entries.drop(7).map { describeObservation(it.second) })
     }
 
     @Test
@@ -168,7 +201,7 @@ class CharacterizationTest {
 
     @Test
     fun `fake Develocity declared before or after GCReport in settings plugins yields identical scan values`() {
-        val config = "histogramEnabled.set(true)\n    gbosEnabled.set(true)"
+        val config = "histogramEnabled.set(true)\n    gbosDevelocityEnabled.set(true)"
 
         writeProject(settingsPlugins = listOf(DEVELOCITY_ID, GCREPORT_ID), gcReportBody = config)
         val before = run()
@@ -178,7 +211,7 @@ class CharacterizationTest {
         assertFakeDevelocityApplied(before)
         assertFakeDevelocityApplied(after)
         val beforeEntries = parseScanValues(before.output.lines())
-        assertEquals(List(6) { GBOS_OBSERVATION_KEY }, beforeEntries.map { it.first })
+        assertEquals(EXPECTED_LEGACY_KEYS + listOf(HISTOGRAM_KEY) + List(6) { GBOS_OBSERVATION_KEY }, beforeEntries.map { it.first })
         assertEquals(beforeEntries, parseScanValues(after.output.lines()))
     }
 

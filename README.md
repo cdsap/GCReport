@@ -25,6 +25,7 @@ plugins {
 gcReport {
     logs.set(listOf("gradle_gc.log"))
     gbosEnabled.set(true)
+    gbosDevelocityEnabled.set(true)
 }
 ```
 
@@ -54,8 +55,8 @@ gcReport {
 
 ```
 
-GBOS output is disabled by default. Enable all GBOS sinks this plugin supports
-with a single switch — either the DSL `gbosEnabled` or the Gradle property:
+GBOS output is disabled by default. Enable the local JSON and NDJSON sinks with
+`gbosEnabled` or the Gradle property:
 
 ```properties
 gcReport.gbos.enabled=true
@@ -67,15 +68,25 @@ NDJSON contains one complete observation per line. Files are replaced atomically
 after successful generation, and are removed when GBOS is disabled or no
 observations are available.
 
-With Develocity present, the same switch also publishes the GBOS observations as
-Build Scan custom values and replaces legacy `gc-*` custom values (including the
-histogram value). Console output, CSV files, and log processing remain unchanged.
+With Develocity present, set `gbosDevelocityEnabled` or
+`gcReport.gbos.develocity.enabled=true` to publish the same observations as
+Build Scan custom values. The local file switch does not enable this projection.
+Existing legacy `gc-*` custom values remain enabled by default; set
+`legacyDevelocityValuesEnabled` to `false` only when intentionally migrating
+away from them. Console output, CSV files, histogram output, and log processing
+remain unchanged.
 
-| Develocity present | `gbosEnabled` | Develocity custom values |
-| --- | --- | --- |
-| no | any | none |
-| yes | false | legacy `gc-*` values (and histogram when enabled) |
-| yes | true | GBOS observations only |
+| Develocity present | `gbosEnabled` | `gbosDevelocityEnabled` | Develocity custom values |
+| --- | --- | --- | --- |
+| no | any | any | none |
+| yes | false | false | legacy `gc-*` values (and histogram when enabled) |
+| yes | true | false | legacy values; local GBOS files |
+| yes | false | true | legacy values plus GBOS observations |
+| yes | true | true | local files, legacy values, and GBOS observations |
+
+The former single `gbosEnabled` configuration remains the local-file opt-in.
+To migrate a build that also published GBOS to Develocity, add
+`gbosDevelocityEnabled.set(true)` or the corresponding Gradle property.
 
 #### Configuring GC Logs for Multiple Processes
 If your project involves multiple JVM processes, such as Gradle and Kotlin, you can configure the plugin to collect GC metrics from all of them by specifying multiple log files.
