@@ -1,7 +1,6 @@
 package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.gradle.api.logging.Logging
 import java.io.File
@@ -17,10 +16,9 @@ internal class GCReportFileWriter(
 
     fun write(
         logFile: File,
-        entries: List<GCEntry>,
+        metrics: GCReportMetrics,
     ) {
-        val metrics = GCReportMetrics.from(entries)
         csvWriter.write(logFile, metrics)
-        consoleReport.render(logFile.path, entries).forEach(logger::lifecycle)
+        consoleReport.render(logFile.path, metrics).forEach(logger::lifecycle)
     }
 }
