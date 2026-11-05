@@ -14,12 +14,12 @@ Analyzing the types of garbage collections that occurred during the build can pr
 
 ### Usage
 #### Apply the plugin (settings)
-Plugin id / marker: `io.github.cdsap.gcreport` (current version `0.1.0`).
+Plugin id / marker: `io.github.cdsap.gcreport` (current version `0.1.1`).
 
 Kotlin (`settings.gradle.kts`):
 ```kotlin
 plugins {
-  id("io.github.cdsap.gcreport") version "0.1.0"
+  id("io.github.cdsap.gcreport") version "0.1.1"
 }
 
 gcReport {
@@ -31,7 +31,7 @@ gcReport {
 Groovy (`settings.gradle`):
 ```groovy
 plugins {
-  id 'io.github.cdsap.gcreport' version '0.1.0'
+  id 'io.github.cdsap.gcreport' version '0.1.1'
 }
 
 gcReport {
@@ -156,7 +156,7 @@ Existing builds that apply the plugin from a project `build.gradle(.kts)` keep w
 
 ```kotlin
 plugins {
-  id("io.github.cdsap.gcreport") version "0.1.0"
+  id("io.github.cdsap.gcreport") version "0.1.1"
 }
 
 gcReport {
