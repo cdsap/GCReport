@@ -1,16 +1,11 @@
 package io.github.cdsap.gcreport.plugin.parser
 
-import io.github.cdsap.gcreport.plugin.model.GCEntry
+import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
 import java.io.File
 
 class GCLogReader(private val file: File) {
     fun parse() = GCLogParser().parse(file.readLines())
 }
-
-data class ParsedGCLog(
-    val file: File,
-    val entries: List<GCEntry>,
-)
 
 class GCLogLoader {
     fun load(paths: List<String>): List<ParsedGCLog> =

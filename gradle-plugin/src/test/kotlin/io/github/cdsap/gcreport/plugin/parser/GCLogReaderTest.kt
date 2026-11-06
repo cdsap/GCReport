@@ -23,6 +23,21 @@ class GCLogReaderTest {
     }
 
     @Test
+    fun `load existing logs in configured order`() {
+        val firstLog = File("src/test/resources/correct_g1_log")
+        val secondLog = createTempFile(prefix = "second-gc-log")
+        try {
+            secondLog.writeText(firstLog.readText())
+
+            val logs = GCLogLoader().load(listOf(secondLog.toString(), firstLog.path))
+
+            assertEquals(listOf(secondLog.toFile(), firstLog), logs.map { it.file })
+        } finally {
+            secondLog.toFile().delete()
+        }
+    }
+
+    @Test
     fun `load existing unparsable log with empty entries`() {
         val logFile = createTempFile(prefix = "unparsable-gc-log")
         try {
