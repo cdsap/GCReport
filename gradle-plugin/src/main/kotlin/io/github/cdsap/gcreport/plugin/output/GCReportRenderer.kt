@@ -7,21 +7,51 @@ import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
-internal class ConsoleReport(
-    private val histogramEnabled: Boolean,
-    private val histogramBucket: Bucket,
+internal data class GCReportRenderingOptions(
+    val histogramEnabled: Boolean,
+    val histogramBucket: Bucket,
+)
+
+internal data class GCReportContent(
+    val collectionCsv: String,
+    val histogramCsv: String?,
+    val consoleReports: List<String>,
+)
+
+internal class GCReportRenderer(
+    private val options: GCReportRenderingOptions,
 ) {
     fun render(
         logName: String,
         metrics: GCReportMetrics,
-    ): List<String> {
-        return buildList {
-            add(renderCollectionTable(logName, metrics))
-            if (histogramEnabled) {
-                add(renderHistogramTable(logName, metrics))
+    ): GCReportContent =
+        GCReportContent(
+            collectionCsv = renderCollectionCsv(metrics),
+            histogramCsv = if (options.histogramEnabled) renderHistogramCsv(metrics) else null,
+            consoleReports =
+                buildList {
+                    add(renderCollectionTable(logName, metrics))
+                    if (options.histogramEnabled) {
+                        add(renderHistogramTable(logName, metrics))
+                    }
+                },
+        )
+
+    private fun renderCollectionCsv(metrics: GCReportMetrics): String =
+        buildString {
+            appendLine("Collection type,Occurrences")
+            metrics.collectionTypeCounts().forEach { (description, count) ->
+                appendLine("$description,$count")
             }
         }
-    }
+
+    private fun renderHistogramCsv(metrics: GCReportMetrics): String =
+        buildString {
+            appendLine("Bucket,Occurrences")
+            Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram()).forEach { (bucket, count) ->
+                appendLine("$bucket,$count")
+            }
+        }
 
     private fun renderCollectionTable(
         logName: String,
@@ -67,12 +97,12 @@ internal class ConsoleReport(
                 }
             }
             row {
-                cell("Type: ${histogramBucket.name}") {
+                cell("Type: ${options.histogramBucket.name}") {
                     columnSpan = 2
                 }
             }
             row("Bucket", "Occurrences")
-            Histogram(histogramBucket).getHistogram(metrics.entriesForHistogram()).forEach { (bucket, count) ->
+            Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram()).forEach { (bucket, count) ->
                 row {
                     cell(bucket)
                     cell(count) {
