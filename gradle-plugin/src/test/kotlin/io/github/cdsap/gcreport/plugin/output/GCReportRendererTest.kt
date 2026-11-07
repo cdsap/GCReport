@@ -4,13 +4,21 @@ import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
-class ConsoleReportTest {
+class GCReportRendererTest {
     @Test
-    fun `renders collection table from gc entries`() {
-        val report = ConsoleReport(histogramEnabled = false, histogramBucket = Bucket.SquareRoot)
+    fun `renders collection csv and console report`() {
+        val report = renderer(histogramEnabled = false).render("gc.log", metrics())
 
+        assertEquals(
+            "Collection type,Occurrences\n" +
+                "Pause Young (Normal),2\n" +
+                "Pause Full (System.gc()),1\n",
+            report.collectionCsv,
+        )
+        assertNull(report.histogramCsv)
         assertEquals(
             listOf(
                 """
@@ -25,15 +33,23 @@ class ConsoleReportTest {
                 └──────────────────────────┴─────────────┘
                 """.trimIndent(),
             ),
-            report.render("gc.log", metrics()),
+            report.consoleReports,
         )
     }
 
     @Test
-    fun `renders histogram table when enabled`() {
-        val report = ConsoleReport(histogramEnabled = true, histogramBucket = Bucket.SquareRoot)
+    fun `renders histogram csv and console report when enabled`() {
+        val report = renderer(histogramEnabled = true).render("gc.log", metrics())
 
-        assertEquals(2, report.render("gc.log", metrics()).size)
+        assertEquals(
+            "Bucket,Occurrences\n" +
+                "0.00-1.00,0\n" +
+                "1.00-2.00,1\n" +
+                "2.00-3.00,1\n" +
+                "3.00-End,1\n",
+            report.histogramCsv,
+        )
+        assertEquals(2, report.consoleReports.size)
         assertEquals(
             """
             ┌─────────────────────────┐
@@ -52,9 +68,17 @@ class ConsoleReportTest {
             │ 3.00-End  │           1 │
             └───────────┴─────────────┘
             """.trimIndent(),
-            report.render("gc.log", metrics())[1],
+            report.consoleReports[1],
         )
     }
+
+    private fun renderer(histogramEnabled: Boolean) =
+        GCReportRenderer(
+            GCReportRenderingOptions(
+                histogramEnabled = histogramEnabled,
+                histogramBucket = Bucket.SquareRoot,
+            ),
+        )
 
     private fun metrics() =
         GCReportMetrics.from(
