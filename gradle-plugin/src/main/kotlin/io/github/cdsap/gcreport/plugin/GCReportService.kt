@@ -3,6 +3,7 @@ package io.github.cdsap.gcreport.plugin
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
+import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
 import io.github.cdsap.gcreport.plugin.output.GCReportFileWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
@@ -40,13 +41,9 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         val reportEnabled = parameters.enabledReport.get()
         val observations = mutableListOf<GbosObservation>()
 
-        GCLogLoader().load(parameters.logs.get()).forEach { log ->
-            if (log.entries.isNotEmpty()) {
-                if (reportEnabled) {
-                    reportWriter.write(log.file, GCReportMetrics.from(log.entries))
-                }
-                observations += GbosDevelocityProjection.observations(log.file.path, log.entries)
-            }
+        for (log in GCLogLoader().load(parameters.logs.get())) {
+            if (log.entries.isEmpty()) continue
+            observations += reportLog(log, reportWriter, reportEnabled)
         }
 
         GbosOutputReport(
@@ -57,5 +54,16 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
             parameters.gbosJsonEnabled.get(),
             parameters.gbosNdjsonEnabled.get(),
         )
+    }
+
+    private fun reportLog(
+        log: ParsedGCLog,
+        reportWriter: GCReportFileWriter,
+        reportEnabled: Boolean,
+    ): List<GbosObservation> {
+        if (reportEnabled) {
+            reportWriter.write(log.file, GCReportMetrics.from(log.entries))
+        }
+        return GbosDevelocityProjection.observations(log.file.path, log.entries)
     }
 }

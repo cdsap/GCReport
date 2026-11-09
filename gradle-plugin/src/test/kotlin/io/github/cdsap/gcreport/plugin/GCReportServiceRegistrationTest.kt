@@ -84,8 +84,9 @@ class GCReportServiceRegistrationTest {
     }
 
     @Test
-    fun `empty log does not prevent a later valid log from being reported`() {
+    fun `empty or unparsable log does not prevent a later valid log from being reported`() {
         val emptyLog = File(testProjectDir, "empty.log").apply { writeText("") }
+        val unparsableLog = File(testProjectDir, "unparsable.log").apply { writeText("not a GC log") }
         val validLog = File(testProjectDir, "valid.log")
         checkNotNull(javaClass.getResourceAsStream("/correct_g1_log")).use { input ->
             validLog.outputStream().use { output -> input.copyTo(output) }
@@ -93,7 +94,8 @@ class GCReportServiceRegistrationTest {
         GCReportTestFixtures.writeKotlinSettings(
             testProjectDir,
             emptyLog.absolutePath,
-            extraGcReportConfig = "logs.set(listOf(\"${emptyLog.absolutePath}\", \"${validLog.absolutePath}\"))",
+            extraGcReportConfig =
+                "logs.set(listOf(\"${emptyLog.absolutePath}\", \"${unparsableLog.absolutePath}\", \"${validLog.absolutePath}\"))",
         )
         GCReportTestFixtures.writeMinimalBuild(testProjectDir)
 
