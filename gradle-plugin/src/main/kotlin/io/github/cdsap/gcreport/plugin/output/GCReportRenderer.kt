@@ -24,38 +24,30 @@ internal class GCReportRenderer(
     fun render(
         logName: String,
         metrics: GCReportMetrics,
-    ): GCReportContent =
-        GCReportContent(
-            collectionCsv = renderCollectionCsv(metrics),
-            histogramCsv = if (options.histogramEnabled) renderHistogramCsv(metrics) else null,
+    ): GCReportContent {
+        val collectionRows = metrics.collectionTypeCounts().toList()
+        val histogramRows =
+            if (options.histogramEnabled) {
+                Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram())
+            } else {
+                null
+            }
+        return GCReportContent(
+            collectionCsv = formatCsvReport("Collection type,Occurrences", collectionRows),
+            histogramCsv = histogramRows?.let { formatCsvReport("Bucket,Occurrences", it) },
             consoleReports =
                 buildList {
-                    add(renderCollectionTable(logName, metrics))
-                    if (options.histogramEnabled) {
-                        add(renderHistogramTable(logName, metrics))
+                    add(renderCollectionTable(logName, collectionRows))
+                    if (histogramRows != null) {
+                        add(renderHistogramTable(logName, histogramRows))
                     }
                 },
         )
-
-    private fun renderCollectionCsv(metrics: GCReportMetrics): String =
-        buildString {
-            appendLine("Collection type,Occurrences")
-            metrics.collectionTypeCounts().forEach { (description, count) ->
-                appendLine("$description,$count")
-            }
-        }
-
-    private fun renderHistogramCsv(metrics: GCReportMetrics): String =
-        buildString {
-            appendLine("Bucket,Occurrences")
-            Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram()).forEach { (bucket, count) ->
-                appendLine("$bucket,$count")
-            }
-        }
+    }
 
     private fun renderCollectionTable(
         logName: String,
-        metrics: GCReportMetrics,
+        rows: List<Pair<String, Int>>,
     ): String =
         table {
             cellStyle {
@@ -70,7 +62,7 @@ internal class GCReportRenderer(
                 }
             }
             row("Collection type", "Occurrences")
-            metrics.collectionTypeCounts().forEach { (description, count) ->
+            rows.forEach { (description, count) ->
                 row {
                     cell(description)
                     cell(count) {
@@ -82,7 +74,7 @@ internal class GCReportRenderer(
 
     private fun renderHistogramTable(
         logName: String,
-        metrics: GCReportMetrics,
+        rows: List<Pair<String, Int>>,
     ): String =
         table {
             cellStyle {
@@ -102,7 +94,7 @@ internal class GCReportRenderer(
                 }
             }
             row("Bucket", "Occurrences")
-            Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram()).forEach { (bucket, count) ->
+            rows.forEach { (bucket, count) ->
                 row {
                     cell(bucket)
                     cell(count) {
