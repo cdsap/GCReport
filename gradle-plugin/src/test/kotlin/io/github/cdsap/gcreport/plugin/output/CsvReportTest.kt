@@ -13,7 +13,16 @@ class CsvReportTest {
     }
 
     @Test
-    fun `formats an empty report with a trailing newline`() {
+    fun `formats histogram rows in order with a trailing newline`() {
+        assertEquals(
+            "Bucket,Occurrences\n0.00-1.00,0\n1.00-End,2\n",
+            formatCsvReport("Bucket,Occurrences", listOf("0.00-1.00" to 0, "1.00-End" to 2)),
+        )
+    }
+
+    @Test
+    fun `formats empty collection and histogram reports with trailing newlines`() {
+        assertEquals("Collection type,Occurrences\n", formatCsvReport("Collection type,Occurrences", emptyList()))
         assertEquals("Bucket,Occurrences\n", formatCsvReport("Bucket,Occurrences", emptyList()))
     }
 }
