@@ -7,18 +7,18 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
-class GCReportRendererTest {
+class LocalReportOutputTest {
     @Test
-    fun `renders collection csv and console report`() {
-        val report = renderer(histogramEnabled = false).render("gc.log", metrics())
+    fun `renders exact collection payloads without histogram data`() {
+        val output = LocalReportOutput.render("gc.log", metrics(), histogram = null)
 
         assertEquals(
             "Collection type,Occurrences\n" +
                 "Pause Young (Normal),2\n" +
                 "Pause Full (System.gc()),1\n",
-            report.collectionCsv,
+            output.collectionCsv,
         )
-        assertNull(report.histogramCsv)
+        assertNull(output.histogramCsv)
         assertEquals(
             listOf(
                 """
@@ -33,13 +33,25 @@ class GCReportRendererTest {
                 └──────────────────────────┴─────────────┘
                 """.trimIndent(),
             ),
-            report.consoleReports,
+            output.consoleTables,
         )
     }
 
     @Test
-    fun `renders histogram csv and console report when enabled`() {
-        val report = renderer(histogramEnabled = true).render("gc.log", metrics())
+    fun `renders exact histogram payloads from supplied histogram data`() {
+        val histogram =
+            LocalReportOutput.Histogram(
+                bucket = Bucket.SquareRoot,
+                rows =
+                    listOf(
+                        "0.00-1.00" to 0,
+                        "1.00-2.00" to 1,
+                        "2.00-3.00" to 1,
+                        "3.00-End" to 1,
+                    ),
+            )
+
+        val output = LocalReportOutput.render("gc.log", metrics(), histogram)
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -47,9 +59,8 @@ class GCReportRendererTest {
                 "1.00-2.00,1\n" +
                 "2.00-3.00,1\n" +
                 "3.00-End,1\n",
-            report.histogramCsv,
+            output.histogramCsv,
         )
-        assertEquals(2, report.consoleReports.size)
         assertEquals(
             """
             ┌─────────────────────────┐
@@ -68,17 +79,9 @@ class GCReportRendererTest {
             │ 3.00-End  │           1 │
             └───────────┴─────────────┘
             """.trimIndent(),
-            report.consoleReports[1],
+            output.consoleTables[1],
         )
     }
-
-    private fun renderer(histogramEnabled: Boolean) =
-        GCReportRenderer(
-            GCReportRenderingOptions(
-                histogramEnabled = histogramEnabled,
-                histogramBucket = Bucket.SquareRoot,
-            ),
-        )
 
     private fun metrics() =
         GCReportMetrics.from(

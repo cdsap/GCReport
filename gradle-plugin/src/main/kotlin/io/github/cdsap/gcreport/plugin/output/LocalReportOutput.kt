@@ -3,43 +3,35 @@ package io.github.cdsap.gcreport.plugin.output
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
-import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
-internal data class GCReportRenderingOptions(
-    val histogramEnabled: Boolean,
-    val histogramBucket: Bucket,
-)
+internal object LocalReportOutput {
+    data class Histogram(
+        val bucket: Bucket,
+        val rows: List<Pair<String, Int>>,
+    )
 
-internal data class GCReportContent(
-    val collectionCsv: String,
-    val histogramCsv: String?,
-    val consoleReports: List<String>,
-)
+    data class Payloads(
+        val collectionCsv: String,
+        val histogramCsv: String?,
+        val consoleTables: List<String>,
+    )
 
-internal class GCReportRenderer(
-    private val options: GCReportRenderingOptions,
-) {
     fun render(
         logName: String,
         metrics: GCReportMetrics,
-    ): GCReportContent {
+        histogram: Histogram?,
+    ): Payloads {
         val collectionRows = metrics.collectionTypeCounts().toList()
-        val histogramRows =
-            if (options.histogramEnabled) {
-                Histogram(options.histogramBucket).getHistogram(metrics.entriesForHistogram())
-            } else {
-                null
-            }
-        return GCReportContent(
+        return Payloads(
             collectionCsv = formatCsvReport("Collection type,Occurrences", collectionRows),
-            histogramCsv = histogramRows?.let { formatCsvReport("Bucket,Occurrences", it) },
-            consoleReports =
+            histogramCsv = histogram?.let { formatCsvReport("Bucket,Occurrences", it.rows) },
+            consoleTables =
                 buildList {
                     add(renderCollectionTable(logName, collectionRows))
-                    if (histogramRows != null) {
-                        add(renderHistogramTable(logName, histogramRows))
+                    if (histogram != null) {
+                        add(renderHistogramTable(logName, histogram))
                     }
                 },
         )
@@ -74,7 +66,7 @@ internal class GCReportRenderer(
 
     private fun renderHistogramTable(
         logName: String,
-        rows: List<Pair<String, Int>>,
+        histogram: Histogram,
     ): String =
         table {
             cellStyle {
@@ -89,12 +81,12 @@ internal class GCReportRenderer(
                 }
             }
             row {
-                cell("Type: ${options.histogramBucket.name}") {
+                cell("Type: ${histogram.bucket.name}") {
                     columnSpan = 2
                 }
             }
             row("Bucket", "Occurrences")
-            rows.forEach { (bucket, count) ->
+            histogram.rows.forEach { (bucket, count) ->
                 row {
                     cell(bucket)
                     cell(count) {
