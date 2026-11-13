@@ -1,6 +1,7 @@
 package io.github.cdsap.gcreport.plugin.output
 
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
+import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import org.gradle.api.logging.Logging
@@ -8,20 +9,25 @@ import java.io.File
 
 internal class GCReportFileWriter(
     private val buildOutput: File,
-    histogramEnabled: Boolean,
-    histogramBucket: Bucket,
+    private val histogramEnabled: Boolean,
+    private val histogramBucket: Bucket,
 ) {
     private val logger = Logging.getLogger(GCReportFileWriter::class.java)
-    private val renderer =
-        GCReportRenderer(
-            GCReportRenderingOptions(histogramEnabled, histogramBucket),
-        )
 
     fun write(
         logFile: File,
         metrics: GCReportMetrics,
     ) {
-        val report = renderer.render(logFile.path, metrics)
+        val histogram =
+            if (histogramEnabled) {
+                LocalReportOutput.Histogram(
+                    histogramBucket,
+                    Histogram(histogramBucket).getHistogram(metrics.entriesForHistogram()),
+                )
+            } else {
+                null
+            }
+        val report = LocalReportOutput.render(logFile.path, metrics, histogram)
         val csvFile = File(buildOutput, logFile.path.getFileNameCsvLog())
         csvFile.parentFile.mkdirs()
         csvFile.writeText(report.collectionCsv)
@@ -32,6 +38,6 @@ internal class GCReportFileWriter(
             histogramFile.writeText(histogramCsv)
         }
 
-        report.consoleReports.forEach(logger::lifecycle)
+        report.consoleTables.forEach(logger::lifecycle)
     }
 }
