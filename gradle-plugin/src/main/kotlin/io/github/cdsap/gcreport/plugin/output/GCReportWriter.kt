@@ -3,21 +3,21 @@ package io.github.cdsap.gcreport.plugin.output
 import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
-import org.gradle.api.logging.Logging
 import java.io.File
 
-internal class GCReportFileWriter(
-    private val buildOutput: File,
+internal class GCReportWriter(
+    private val outputDirectory: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
+    private val log: (String) -> Unit,
 ) {
-    private val logger = Logging.getLogger(GCReportFileWriter::class.java)
-
     fun write(
-        logFile: File,
-        metrics: GCReportMetrics,
+        logPath: String,
+        entries: List<GCEntry>,
     ) {
+        val metrics = GCReportMetrics.from(entries)
         val histogram =
             if (histogramEnabled) {
                 LocalReportOutput.Histogram(
@@ -27,17 +27,17 @@ internal class GCReportFileWriter(
             } else {
                 null
             }
-        val report = LocalReportOutput.render(logFile.path, metrics, histogram)
-        val csvFile = File(buildOutput, logFile.path.getFileNameCsvLog())
+        val report = LocalReportOutput.render(logPath, metrics, histogram)
+        val csvFile = File(outputDirectory, logPath.getFileNameCsvLog())
         csvFile.parentFile.mkdirs()
         csvFile.writeText(report.collectionCsv)
 
         report.histogramCsv?.let { histogramCsv ->
-            val histogramFile = File(buildOutput, "histogram_${logFile.path.getFileNameCsvLog()}")
+            val histogramFile = File(outputDirectory, "histogram_${logPath.getFileNameCsvLog()}")
             histogramFile.parentFile.mkdirs()
             histogramFile.writeText(histogramCsv)
         }
 
-        report.consoleTables.forEach(logger::lifecycle)
+        report.consoleTables.forEach(log)
     }
 }

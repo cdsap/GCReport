@@ -2,13 +2,13 @@ package io.github.cdsap.gcreport.plugin
 
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
-import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
-import io.github.cdsap.gcreport.plugin.output.GCReportFileWriter
+import io.github.cdsap.gcreport.plugin.output.GCReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.logging.Logging
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.services.BuildService
@@ -18,6 +18,8 @@ import org.gradle.tooling.events.OperationCompletionListener
 import java.io.File
 
 abstract class GCReportService : BuildService<GCReportService.Params>, AutoCloseable, OperationCompletionListener {
+    private val logger = Logging.getLogger(GCReportService::class.java)
+
     interface Params : BuildServiceParameters {
         val logs: ListProperty<String>
         val histogramEnabled: Property<Boolean>
@@ -33,10 +35,11 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
     override fun close() {
         val buildOutput = parameters.buildOutput.get().asFile
         val reportWriter =
-            GCReportFileWriter(
+            GCReportWriter(
                 buildOutput,
                 parameters.histogramEnabled.get(),
                 parameters.histogramBucket.get(),
+                logger::lifecycle,
             )
         val reportEnabled = parameters.enabledReport.get()
         val observations = mutableListOf<GbosObservation>()
@@ -58,11 +61,11 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     private fun reportLog(
         log: ParsedGCLog,
-        reportWriter: GCReportFileWriter,
+        reportWriter: GCReportWriter,
         reportEnabled: Boolean,
     ): List<GbosObservation> {
         if (reportEnabled) {
-            reportWriter.write(log.file, GCReportMetrics.from(log.entries))
+            reportWriter.write(log.file.path, log.entries)
         }
         return GbosDevelocityProjection.observations(log.file.path, log.entries)
     }
