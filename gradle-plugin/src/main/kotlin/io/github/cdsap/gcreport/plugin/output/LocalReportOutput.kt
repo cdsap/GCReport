@@ -23,10 +23,11 @@ internal object LocalReportOutput {
         metrics: GCReportMetrics,
         histogram: Histogram?,
     ): Payloads {
-        val collectionRows = metrics.collectionTypeCounts().toList()
+        val collectionCounts = metrics.collectionTypeCounts()
+        val collectionRows = collectionCounts.toList()
         return Payloads(
-            collectionCsv = formatCsvReport("Collection type,Occurrences", collectionRows),
-            histogramCsv = histogram?.let { formatCsvReport("Bucket,Occurrences", it.rows) },
+            collectionCsv = CsvReportProjection.collection(collectionCounts),
+            histogramCsv = histogram?.let { CsvReportProjection.histogram(it.rows) },
             consoleTables =
                 buildList {
                     add(renderCollectionTable(logName, collectionRows))
