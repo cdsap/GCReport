@@ -3,9 +3,9 @@ package io.github.cdsap.gcreport.plugin
 import io.github.cdsap.gbos.core.GbosObservation
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
-import io.github.cdsap.gcreport.plugin.output.GCReportWriter
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
+import io.github.cdsap.gcreport.plugin.output.LocalGcReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.Logging
@@ -34,8 +34,8 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     override fun close() {
         val buildOutput = parameters.buildOutput.get().asFile
-        val reportWriter =
-            GCReportWriter(
+        val localGcReport =
+            LocalGcReport(
                 buildOutput,
                 parameters.histogramEnabled.get(),
                 parameters.histogramBucket.get(),
@@ -46,7 +46,7 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
         for (log in GCLogLoader().load(parameters.logs.get())) {
             if (log.entries.isEmpty()) continue
-            observations += reportLog(log, reportWriter, reportEnabled)
+            observations += reportLog(log, localGcReport, reportEnabled)
         }
 
         GbosOutputReport(
@@ -61,11 +61,11 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     private fun reportLog(
         log: ParsedGCLog,
-        reportWriter: GCReportWriter,
+        localGcReport: LocalGcReport,
         reportEnabled: Boolean,
     ): List<GbosObservation> {
         if (reportEnabled) {
-            reportWriter.write(log.file.path, log.entries)
+            localGcReport.write(log.file.path, log.entries)
         }
         return GbosDevelocityProjection.observations(log.file.path, log.entries)
     }

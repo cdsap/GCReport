@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.io.File
 
-class GCReportWriterTest {
+class LocalGcReportTest {
     @TempDir
     lateinit var outputDirectory: File
 
@@ -17,7 +17,7 @@ class GCReportWriterTest {
     fun `writes collection csv and logs collection table`() {
         val consoleOutput = mutableListOf<String>()
 
-        GCReportWriter(
+        LocalGcReport(
             outputDirectory,
             histogramEnabled = false,
             histogramBucket = Bucket.SquareRoot,
@@ -40,7 +40,7 @@ class GCReportWriterTest {
     fun `writes histogram csv and logs histogram table when enabled`() {
         val consoleOutput = mutableListOf<String>()
 
-        GCReportWriter(
+        LocalGcReport(
             outputDirectory,
             histogramEnabled = true,
             histogramBucket = Bucket.SquareRoot,
