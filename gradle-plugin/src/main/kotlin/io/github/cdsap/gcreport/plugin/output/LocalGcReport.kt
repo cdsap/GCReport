@@ -7,7 +7,7 @@ import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import java.io.File
 
-internal class GCReportWriter(
+internal class LocalGcReport(
     private val outputDirectory: File,
     private val histogramEnabled: Boolean,
     private val histogramBucket: Bucket,
