@@ -7,7 +7,7 @@ import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
-internal object DevelocityValueProjection {
+internal object DevelocityCustomValueProjection {
     fun values(
         log: String,
         gcEntries: List<GCEntry>,
