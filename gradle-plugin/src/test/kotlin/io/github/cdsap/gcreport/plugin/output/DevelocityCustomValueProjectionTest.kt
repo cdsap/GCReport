@@ -6,11 +6,11 @@ import io.github.cdsap.gcreport.plugin.model.GCEntry
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
-class DevelocityValueProjectionTest {
+class DevelocityCustomValueProjectionTest {
     @Test
     fun `projects collection counts total and histogram in publication order`() {
         val values =
-            DevelocityValueProjection.values(
+            DevelocityCustomValueProjection.values(
                 log = "/tmp/gradle_gc.log",
                 gcEntries =
                     listOf(
@@ -39,7 +39,7 @@ class DevelocityValueProjectionTest {
     @Test
     fun `omits zero total collections while retaining collection counts`() {
         val values =
-            DevelocityValueProjection.values(
+            DevelocityCustomValueProjection.values(
                 log = "gc.log",
                 gcEntries = listOf(entry("Concurrent Mark Cycle", "1.00")),
                 histogramEnabled = false,
@@ -58,7 +58,7 @@ class DevelocityValueProjectionTest {
     fun `includes encoded GBOS values only when enabled`() {
         val entries = listOf(entry("Pause Young", "1.00"))
         val disabled =
-            DevelocityValueProjection.values(
+            DevelocityCustomValueProjection.values(
                 log = "/tmp/gradle_gc.log",
                 gcEntries = entries,
                 histogramEnabled = false,
@@ -67,7 +67,7 @@ class DevelocityValueProjectionTest {
                 gbosEnabled = false,
             )
         val enabled =
-            DevelocityValueProjection.values(
+            DevelocityCustomValueProjection.values(
                 log = "/tmp/gradle_gc.log",
                 gcEntries = entries,
                 histogramEnabled = false,

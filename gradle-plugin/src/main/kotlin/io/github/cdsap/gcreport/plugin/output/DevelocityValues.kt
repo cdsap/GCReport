@@ -15,7 +15,7 @@ class DevelocityValues(
 ) {
     fun report() {
         val values =
-            DevelocityValueProjection.values(
+            DevelocityCustomValueProjection.values(
                 log,
                 gcEntries,
                 histogramEnabled,
