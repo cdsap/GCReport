@@ -3,36 +3,36 @@ package io.github.cdsap.gcreport.plugin.output
 import com.jakewharton.picnic.TextAlignment
 import com.jakewharton.picnic.table
 import io.github.cdsap.gcreport.plugin.extensions.getFileName
+import io.github.cdsap.gcreport.plugin.histogram.Histogram
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 
-internal object LocalReportOutput {
-    data class Histogram(
-        val bucket: Bucket,
-        val rows: List<Pair<String, Int>>,
-    )
-
-    data class Payloads(
+internal object LocalReportProjection {
+    data class Output(
         val collectionCsv: String,
         val histogramCsv: String?,
         val consoleTables: List<String>,
     )
 
-    fun render(
+    fun project(
         logName: String,
         metrics: GCReportMetrics,
-        histogram: Histogram?,
-    ): Payloads {
+        histogramBucket: Bucket?,
+    ): Output {
         val collectionCounts = metrics.collectionTypeCounts()
         val collectionRows = collectionCounts.toList()
-        return Payloads(
+        val histogramRows =
+            histogramBucket?.let { bucket ->
+                Histogram(bucket).getHistogram(metrics.entriesForHistogram())
+            }
+        return Output(
             collectionCsv = CsvReportProjection.collection(collectionCounts),
-            histogramCsv = histogram?.let { CsvReportProjection.histogram(it.rows) },
+            histogramCsv = histogramRows?.let(CsvReportProjection::histogram),
             consoleTables =
                 buildList {
                     add(renderCollectionTable(logName, collectionRows))
-                    if (histogram != null) {
-                        add(renderHistogramTable(logName, histogram))
+                    if (histogramBucket != null && histogramRows != null) {
+                        add(renderHistogramTable(logName, histogramBucket, histogramRows))
                     }
                 },
         )
@@ -67,7 +67,8 @@ internal object LocalReportOutput {
 
     private fun renderHistogramTable(
         logName: String,
-        histogram: Histogram,
+        bucket: Bucket,
+        rows: List<Pair<String, Int>>,
     ): String =
         table {
             cellStyle {
@@ -82,14 +83,14 @@ internal object LocalReportOutput {
                 }
             }
             row {
-                cell("Type: ${histogram.bucket.name}") {
+                cell("Type: ${bucket.name}") {
                     columnSpan = 2
                 }
             }
             row("Bucket", "Occurrences")
-            histogram.rows.forEach { (bucket, count) ->
+            rows.forEach { (histogramBucket, count) ->
                 row {
-                    cell(bucket)
+                    cell(histogramBucket)
                     cell(count) {
                         alignment = TextAlignment.MiddleRight
                     }
