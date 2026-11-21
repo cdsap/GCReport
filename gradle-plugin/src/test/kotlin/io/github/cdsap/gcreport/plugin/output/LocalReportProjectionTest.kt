@@ -7,18 +7,18 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Test
 
-class LocalReportOutputTest {
+class LocalReportProjectionTest {
     @Test
-    fun `renders exact collection payloads without histogram data`() {
-        val output = LocalReportOutput.render("gc.log", metrics(), histogram = null)
+    fun `projects exact collection csv and console table`() {
+        val projection = LocalReportProjection.project("gc.log", metrics(), histogramBucket = null)
 
         assertEquals(
             "Collection type,Occurrences\n" +
                 "Pause Young (Normal),2\n" +
                 "Pause Full (System.gc()),1\n",
-            output.collectionCsv,
+            projection.collectionCsv,
         )
-        assertNull(output.histogramCsv)
+        assertNull(projection.histogramCsv)
         assertEquals(
             listOf(
                 """
@@ -33,25 +33,20 @@ class LocalReportOutputTest {
                 └──────────────────────────┴─────────────┘
                 """.trimIndent(),
             ),
-            output.consoleTables,
+            projection.consoleTables,
         )
     }
 
     @Test
-    fun `renders exact histogram payloads from supplied histogram data`() {
-        val histogram =
-            LocalReportOutput.Histogram(
-                bucket = Bucket.SquareRoot,
-                rows =
-                    listOf(
-                        "0.00-1.00" to 0,
-                        "1.00-2.00" to 1,
-                        "2.00-3.00" to 1,
-                        "3.00-End" to 1,
-                    ),
+    fun `projects exact histogram csv and console table`() {
+        val projection =
+            LocalReportProjection.project(
+                "gc.log",
+                GCReportMetrics.from(
+                    metricsEntries() + gcEntry("4.00", GCReportMetrics.CONCURRENT_MARK_CYCLE),
+                ),
+                Bucket.SquareRoot,
             )
-
-        val output = LocalReportOutput.render("gc.log", metrics(), histogram)
 
         assertEquals(
             "Bucket,Occurrences\n" +
@@ -59,7 +54,7 @@ class LocalReportOutputTest {
                 "1.00-2.00,1\n" +
                 "2.00-3.00,1\n" +
                 "3.00-End,1\n",
-            output.histogramCsv,
+            projection.histogramCsv,
         )
         assertEquals(
             """
@@ -79,17 +74,17 @@ class LocalReportOutputTest {
             │ 3.00-End  │           1 │
             └───────────┴─────────────┘
             """.trimIndent(),
-            output.consoleTables[1],
+            projection.consoleTables[1],
         )
     }
 
-    private fun metrics() =
-        GCReportMetrics.from(
-            listOf(
-                gcEntry("1.00", "Pause Young (Normal)"),
-                gcEntry("2.00", "Pause Young (Normal)"),
-                gcEntry("3.00", "Pause Full (System.gc())"),
-            ),
+    private fun metrics() = GCReportMetrics.from(metricsEntries())
+
+    private fun metricsEntries() =
+        listOf(
+            gcEntry("1.00", "Pause Young (Normal)"),
+            gcEntry("2.00", "Pause Young (Normal)"),
+            gcEntry("3.00", "Pause Full (System.gc())"),
         )
 
     private fun gcEntry(

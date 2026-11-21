@@ -1,11 +1,13 @@
 package io.github.cdsap.gcreport.plugin
 
 import io.github.cdsap.gbos.core.GbosObservation
+import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.model.Bucket
+import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
-import io.github.cdsap.gcreport.plugin.output.LocalGcReport
+import io.github.cdsap.gcreport.plugin.output.LocalReportProjection
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.Logging
@@ -34,19 +36,13 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     override fun close() {
         val buildOutput = parameters.buildOutput.get().asFile
-        val localGcReport =
-            LocalGcReport(
-                buildOutput,
-                parameters.histogramEnabled.get(),
-                parameters.histogramBucket.get(),
-                logger::lifecycle,
-            )
+        val histogramBucket = parameters.histogramBucket.get().takeIf { parameters.histogramEnabled.get() }
         val reportEnabled = parameters.enabledReport.get()
         val observations = mutableListOf<GbosObservation>()
 
         for (log in GCLogLoader().load(parameters.logs.get())) {
             if (log.entries.isEmpty()) continue
-            observations += reportLog(log, localGcReport, reportEnabled)
+            observations += reportLog(log, buildOutput, reportEnabled, histogramBucket)
         }
 
         GbosOutputReport(
@@ -61,11 +57,30 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
 
     private fun reportLog(
         log: ParsedGCLog,
-        localGcReport: LocalGcReport,
+        buildOutput: File,
         reportEnabled: Boolean,
+        histogramBucket: Bucket?,
     ): List<GbosObservation> {
         if (reportEnabled) {
-            localGcReport.write(log.file.path, log.entries)
+            val logPath = log.file.path
+            val report =
+                LocalReportProjection.project(
+                    logPath,
+                    GCReportMetrics.from(log.entries),
+                    histogramBucket,
+                )
+            val csvFileName = logPath.getFileNameCsvLog()
+            val csvFile = File(buildOutput, csvFileName)
+            csvFile.parentFile.mkdirs()
+            csvFile.writeText(report.collectionCsv)
+
+            report.histogramCsv?.let { histogramCsv ->
+                val histogramFile = File(buildOutput, "histogram_$csvFileName")
+                histogramFile.parentFile.mkdirs()
+                histogramFile.writeText(histogramCsv)
+            }
+
+            report.consoleTables.forEach(logger::lifecycle)
         }
         return GbosDevelocityProjection.observations(log.file.path, log.entries)
     }
