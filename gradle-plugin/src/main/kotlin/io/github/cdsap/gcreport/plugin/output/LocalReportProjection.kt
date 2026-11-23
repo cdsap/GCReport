@@ -25,44 +25,17 @@ internal object LocalReportProjection {
                 Histogram(bucket).getHistogram(metrics.entriesForHistogram())
             }
         return Output(
-            collectionCsv = CsvReportFormatter.format("Collection type", "Occurrences", collectionRows),
+            collectionCsv = CollectionTypeReport.csv(collectionRows),
             histogramCsv = histogramRows?.let { CsvReportFormatter.format("Bucket", "Occurrences", it) },
             consoleTables =
                 buildList {
-                    add(renderCollectionTable(logName, collectionRows))
+                    add(CollectionTypeReport.consoleTable(logName.getFileName(), collectionRows))
                     if (histogramBucket != null && histogramRows != null) {
                         add(renderHistogramTable(logName, histogramBucket, histogramRows))
                     }
                 },
         )
     }
-
-    private fun renderCollectionTable(
-        logName: String,
-        rows: List<Pair<String, Int>>,
-    ): String =
-        table {
-            cellStyle {
-                alignment = TextAlignment.MiddleLeft
-                paddingLeft = 1
-                paddingRight = 1
-                border = true
-            }
-            row {
-                cell("GC Log: ${logName.getFileName()}") {
-                    columnSpan = 2
-                }
-            }
-            row("Collection type", "Occurrences")
-            rows.forEach { (description, count) ->
-                row {
-                    cell(description)
-                    cell(count) {
-                        alignment = TextAlignment.MiddleRight
-                    }
-                }
-            }
-        }.toString()
 
     private fun renderHistogramTable(
         logName: String,
