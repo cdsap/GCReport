@@ -1,13 +1,12 @@
 package io.github.cdsap.gcreport.plugin
 
 import io.github.cdsap.gbos.core.GbosObservation
-import io.github.cdsap.gcreport.plugin.extensions.getFileNameCsvLog
 import io.github.cdsap.gcreport.plugin.model.Bucket
 import io.github.cdsap.gcreport.plugin.model.GCReportMetrics
 import io.github.cdsap.gcreport.plugin.model.ParsedGCLog
 import io.github.cdsap.gcreport.plugin.output.GbosDevelocityProjection
 import io.github.cdsap.gcreport.plugin.output.GbosOutputReport
-import io.github.cdsap.gcreport.plugin.output.LocalReportProjection
+import io.github.cdsap.gcreport.plugin.output.LocalGcReport
 import io.github.cdsap.gcreport.plugin.parser.GCLogLoader
 import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.logging.Logging
@@ -62,25 +61,12 @@ abstract class GCReportService : BuildService<GCReportService.Params>, AutoClose
         histogramBucket: Bucket?,
     ): List<GbosObservation> {
         if (reportEnabled) {
-            val logPath = log.file.path
-            val report =
-                LocalReportProjection.project(
-                    logPath,
-                    GCReportMetrics.from(log.entries),
-                    histogramBucket,
-                )
-            val csvFileName = logPath.getFileNameCsvLog()
-            val csvFile = File(buildOutput, csvFileName)
-            csvFile.parentFile.mkdirs()
-            csvFile.writeText(report.collectionCsv)
-
-            report.histogramCsv?.let { histogramCsv ->
-                val histogramFile = File(buildOutput, "histogram_$csvFileName")
-                histogramFile.parentFile.mkdirs()
-                histogramFile.writeText(histogramCsv)
-            }
-
-            report.consoleTables.forEach(logger::lifecycle)
+            LocalGcReport(logger::lifecycle).report(
+                GCReportMetrics.from(log.entries),
+                log.file.path,
+                buildOutput,
+                histogramBucket,
+            )
         }
         return GbosDevelocityProjection.observations(log.file.path, log.entries)
     }
