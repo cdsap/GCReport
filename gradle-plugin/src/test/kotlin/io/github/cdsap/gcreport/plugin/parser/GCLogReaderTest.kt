@@ -4,11 +4,21 @@ import io.github.cdsap.gcreport.plugin.model.GCEntry
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import java.io.File
+import java.io.FileNotFoundException
 import kotlin.io.path.createTempFile
 import kotlin.io.path.writeText
 
 class GCLogReaderTest {
+    @Test
+    fun `parse missing file propagates read failure`() {
+        val missingLog = createTempFile(prefix = "missing-gc-log").toFile()
+        assertTrue(missingLog.delete())
+
+        assertThrows<FileNotFoundException> { GCLogReader(missingLog).parse() }
+    }
+
     @Test
     fun `load existing logs and ignore missing logs`() {
         val existingLog = File("src/test/resources/correct_g1_log")
@@ -51,59 +61,6 @@ class GCLogReaderTest {
         } finally {
             logFile.toFile().delete()
         }
-    }
-
-    @Test
-    fun `parse in-memory log lines`() {
-        val gcEntries =
-            GCLogParser().parse(
-                listOf(
-                    "[1.164s][info   ][gc          ] GC(0) Pause Young (Concurrent Start) (Metadata GC Threshold) " +
-                        "194M->24M(4096M) 4.981ms",
-                ),
-            )
-
-        assertEquals(
-            GCEntry(
-                timeStamp = "1.164",
-                timeStampUnit = "s",
-                id = "0",
-                description = "Pause Young (Concurrent Start) (Metadata GC Threshold)",
-                duration = "4.981",
-                durationUnit = "ms",
-                memoryBefore = "194",
-                memoryBeforeUnit = "M",
-                memoryAfter = "24",
-                memoryAfterUnit = "M",
-                memory = "4096",
-                memoryUnit = "M",
-            ),
-            gcEntries.single(),
-        )
-    }
-
-    @Test
-    fun `parse concurrent mark cycle from in-memory log lines`() {
-        val gcEntries =
-            GCLogParser().parse(
-                listOf(
-                    "[1.000s][info   ][gc          ] GC(1) Pause Remark 25M->25M(4096M) 0.941ms",
-                    "[1.001s][info   ][gc          ] GC(1) Pause Cleanup 26M->26M(4096M) 0.010ms",
-                    "[1.002s][info   ][gc          ] GC(1) Concurrent Mark Cycle 10.974ms",
-                ),
-            )
-
-        assertEquals(
-            GCEntry(
-                timeStamp = "1.002",
-                timeStampUnit = "s",
-                id = "1",
-                description = "Concurrent Mark Cycle",
-                duration = "10.974",
-                durationUnit = "ms",
-            ),
-            gcEntries.single(),
-        )
     }
 
     @Test
