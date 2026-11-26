@@ -2,7 +2,7 @@ package io.github.cdsap.gcreport.plugin.parser
 
 import io.github.cdsap.gcreport.plugin.model.GCEntry
 
-class GCLogParser {
+internal class GCLogParser {
     private val gcEntryRegex =
         """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\) (.+?) (\d+)([A-Z])->(\d+)([A-Z])\((\d+)([A-Z])\) (\d+\.\d+)([a-z]+)""".toRegex()
     private val gcLineRegex = """\[(\d+\.\d+)([a-z]+)]\[.*?\] GC\((\d+)\)""".toRegex()
