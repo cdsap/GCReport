@@ -26,13 +26,7 @@ internal object GcDevelocityProjection {
             }
             if (histogramEnabled) {
                 val histogram = Histogram(histogramBucket).getHistogram(metrics.entriesForHistogram())
-                var histogramText = "["
-                histogram.forEach {
-                    histogramText += "\"${it.first}\": \"${it.second}\", "
-                }
-                if (histogramText.isNotEmpty()) {
-                    add("gc-$logFileName-histogram" to "${histogramText.dropLast(1)}]")
-                }
+                add("gc-$logFileName-histogram" to HistogramValueFormatter.format(histogram))
             }
         }
     }
